@@ -14,8 +14,8 @@ export default function CotizacionesPage() {
   >("Pendiente");
 
   const [cotizaciones, setCotizaciones] = useState<Cotizacion[]>([]);
+  const [busqueda, setBusqueda] = useState("");
 
-  // Cargar cotizaciones
   useEffect(() => {
     const datosGuardados = localStorage.getItem("cotizaciones");
 
@@ -24,13 +24,25 @@ export default function CotizacionesPage() {
     }
   }, []);
 
-  // Guardar cotizaciones
   useEffect(() => {
     localStorage.setItem(
       "cotizaciones",
       JSON.stringify(cotizaciones)
     );
   }, [cotizaciones]);
+
+  const cotizacionesFiltradas = cotizaciones.filter(
+    (cotizacion) =>
+      cotizacion.materiales
+        .toLowerCase()
+        .includes(busqueda.toLowerCase()) ||
+      cotizacion.estado
+        .toLowerCase()
+        .includes(busqueda.toLowerCase()) ||
+      cotizacion.solicitudId
+        .toString()
+        .includes(busqueda)
+  );
 
   const guardarCotizacion = () => {
     if (
@@ -70,174 +82,316 @@ export default function CotizacionesPage() {
   };
 
   const eliminarCotizacion = (id: number) => {
-    const confirmar = confirm(
-      "¿Desea eliminar esta cotización?"
-    );
-
-    if (!confirmar) return;
+    if (
+      !confirm(
+        "¿Desea eliminar esta cotización?"
+      )
+    )
+      return;
 
     setCotizaciones((prev) =>
-      prev.filter(
-        (cotizacion) => cotizacion.id !== id
-      )
+      prev.filter((c) => c.id !== id)
     );
   };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>Gestión de Cotizaciones</h1>
-
-      <input
-        type="number"
-        placeholder="ID Solicitud"
-        value={solicitudId}
-        onChange={(e) =>
-          setSolicitudId(e.target.value)
-        }
-      />
-
-      <br />
-      <br />
-
-      <input
-        type="text"
-        placeholder="Materiales incluidos"
-        value={materiales}
-        onChange={(e) =>
-          setMateriales(e.target.value)
-        }
-      />
-
-      <br />
-      <br />
-
-      <input
-        type="number"
-        placeholder="Cantidad"
-        value={cantidad}
-        onChange={(e) =>
-          setCantidad(e.target.value)
-        }
-      />
-
-      <br />
-      <br />
-
-      <input
-        type="number"
-        placeholder="Precio Total"
-        value={precioTotal}
-        onChange={(e) =>
-          setPrecioTotal(e.target.value)
-        }
-      />
-
-      <br />
-      <br />
-
-      <input
-        type="date"
-        value={fechaEmision}
-        onChange={(e) =>
-          setFechaEmision(e.target.value)
-        }
-      />
-
-      <br />
-      <br />
-
-      <select
-        value={estado}
-        onChange={(e) =>
-          setEstado(
-            e.target.value as
-              | "Pendiente"
-              | "Aprobada"
-              | "Rechazada"
-          )
-        }
+    <div
+      style={{
+        backgroundColor: "#f4f6f9",
+        minHeight: "100vh",
+        padding: "30px",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: "1200px",
+          margin: "0 auto",
+        }}
       >
-        <option value="Pendiente">
-          Pendiente
-        </option>
-        <option value="Aprobada">
-          Aprobada
-        </option>
-        <option value="Rechazada">
-          Rechazada
-        </option>
-      </select>
+        <h1
+          style={{
+            color: "#0f4c81",
+            marginBottom: "20px",
+          }}
+        >
+          💰 Gestión de Cotizaciones
+        </h1>
 
-      <br />
-      <br />
+        <div
+          style={{
+            background: "white",
+            padding: "25px",
+            borderRadius: "15px",
+            boxShadow:
+              "0 4px 15px rgba(0,0,0,0.1)",
+            marginBottom: "25px",
+          }}
+        >
+          <h2>Nueva Cotización</h2>
 
-      <button onClick={guardarCotizacion}>
-        Guardar Cotización
-      </button>
+          <input
+            type="number"
+            placeholder="ID Solicitud"
+            value={solicitudId}
+            onChange={(e) =>
+              setSolicitudId(e.target.value)
+            }
+            style={inputStyle}
+          />
 
-      <hr />
+          <input
+            type="text"
+            placeholder="Materiales"
+            value={materiales}
+            onChange={(e) =>
+              setMateriales(e.target.value)
+            }
+            style={inputStyle}
+          />
 
-      <h2>Listado de Cotizaciones</h2>
+          <input
+            type="number"
+            placeholder="Cantidad"
+            value={cantidad}
+            onChange={(e) =>
+              setCantidad(e.target.value)
+            }
+            style={inputStyle}
+          />
 
-      {cotizaciones.length === 0 ? (
-        <p>No existen cotizaciones registradas.</p>
-      ) : (
-        cotizaciones.map((cotizacion) => (
-          <div
-            key={cotizacion.id}
-            style={{
-              border: "1px solid #ccc",
-              padding: "10px",
-              marginBottom: "10px",
-              borderRadius: "5px",
-            }}
+          <input
+            type="number"
+            placeholder="Precio Total"
+            value={precioTotal}
+            onChange={(e) =>
+              setPrecioTotal(e.target.value)
+            }
+            style={inputStyle}
+          />
+
+          <input
+            type="date"
+            value={fechaEmision}
+            onChange={(e) =>
+              setFechaEmision(e.target.value)
+            }
+            style={inputStyle}
+          />
+
+          <select
+            value={estado}
+            onChange={(e) =>
+              setEstado(
+                e.target.value as
+                  | "Pendiente"
+                  | "Aprobada"
+                  | "Rechazada"
+              )
+            }
+            style={inputStyle}
           >
-            <h3>
-              Cotización #{cotizacion.id}
-            </h3>
+            <option value="Pendiente">
+              Pendiente
+            </option>
 
+            <option value="Aprobada">
+              Aprobada
+            </option>
+
+            <option value="Rechazada">
+              Rechazada
+            </option>
+          </select>
+
+          <button
+            onClick={guardarCotizacion}
+            style={guardarButton}
+          >
+            Guardar Cotización
+          </button>
+        </div>
+                <div
+          style={{
+            background: "white",
+            padding: "25px",
+            borderRadius: "15px",
+            boxShadow:
+              "0 4px 15px rgba(0,0,0,0.1)",
+          }}
+        >
+          <h2>
+            Cotizaciones Registradas (
+            {cotizaciones.length})
+          </h2>
+
+          <input
+            type="text"
+            placeholder="🔍 Buscar por ID, materiales o estado"
+            value={busqueda}
+            onChange={(e) =>
+              setBusqueda(e.target.value)
+            }
+            style={{
+              width: "100%",
+              padding: "12px",
+              marginBottom: "20px",
+              borderRadius: "8px",
+              border: "1px solid #ccc",
+            }}
+          />
+
+          {cotizacionesFiltradas.length === 0 ? (
             <p>
-              <strong>ID Solicitud:</strong>{" "}
-              {cotizacion.solicitudId}
+              No existen cotizaciones
+              registradas.
             </p>
-
-            <p>
-              <strong>Materiales:</strong>{" "}
-              {cotizacion.materiales}
-            </p>
-
-            <p>
-              <strong>Cantidad:</strong>{" "}
-              {cotizacion.cantidad}
-            </p>
-
-            <p>
-              <strong>Precio Total:</strong> $
-              {cotizacion.precioTotal}
-            </p>
-
-            <p>
-              <strong>Fecha:</strong>{" "}
-              {cotizacion.fechaEmision}
-            </p>
-
-            <p>
-              <strong>Estado:</strong>{" "}
-              {cotizacion.estado}
-            </p>
-
-            <button
-              onClick={() =>
-                eliminarCotizacion(
-                  cotizacion.id
-                )
-              }
+          ) : (
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                marginTop: "15px",
+              }}
             >
-              Eliminar
-            </button>
-          </div>
-        ))
-      )}
+              <thead>
+                <tr
+                  style={{
+                    backgroundColor:
+                      "#0f4c81",
+                    color: "white",
+                  }}
+                >
+                  <th style={thStyle}>ID</th>
+                  <th style={thStyle}>
+                    Solicitud
+                  </th>
+                  <th style={thStyle}>
+                    Materiales
+                  </th>
+                  <th style={thStyle}>
+                    Cantidad
+                  </th>
+                  <th style={thStyle}>
+                    Precio
+                  </th>
+                  <th style={thStyle}>
+                    Fecha
+                  </th>
+                  <th style={thStyle}>
+                    Estado
+                  </th>
+                  <th style={thStyle}>
+                    Acción
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {cotizacionesFiltradas.map(
+                  (cotizacion) => (
+                    <tr
+                      key={
+                        cotizacion.id
+                      }
+                    >
+                      <td style={tdStyle}>
+                        {cotizacion.id}
+                      </td>
+
+                      <td style={tdStyle}>
+                        {
+                          cotizacion.solicitudId
+                        }
+                      </td>
+
+                      <td style={tdStyle}>
+                        {
+                          cotizacion.materiales
+                        }
+                      </td>
+
+                      <td style={tdStyle}>
+                        {
+                          cotizacion.cantidad
+                        }
+                      </td>
+
+                      <td style={tdStyle}>
+                        $
+                        {cotizacion.precioTotal.toLocaleString(
+                          "es-CL"
+                        )}
+                      </td>
+
+                      <td style={tdStyle}>
+                        {
+                          cotizacion.fechaEmision
+                        }
+                      </td>
+
+                      <td style={tdStyle}>
+                        {
+                          cotizacion.estado
+                        }
+                      </td>
+
+                      <td style={tdStyle}>
+                        <button
+                          onClick={() =>
+                            eliminarCotizacion(
+                              cotizacion.id
+                            )
+                          }
+                          style={
+                            eliminarButton
+                          }
+                        >
+                          Eliminar
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                )}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
+
+const inputStyle = {
+  width: "100%",
+  padding: "12px",
+  marginBottom: "10px",
+  borderRadius: "8px",
+  border: "1px solid #ccc",
+};
+
+const guardarButton = {
+  backgroundColor: "#0f4c81",
+  color: "white",
+  border: "none",
+  padding: "12px 20px",
+  borderRadius: "8px",
+  cursor: "pointer",
+};
+
+const eliminarButton = {
+  backgroundColor: "#dc3545",
+  color: "white",
+  border: "none",
+  padding: "8px 12px",
+  borderRadius: "6px",
+  cursor: "pointer",
+};
+
+const thStyle = {
+  padding: "12px",
+};
+
+const tdStyle = {
+  padding: "12px",
+  borderBottom: "1px solid #ddd",
+};
