@@ -1,73 +1,242 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Cotizacion } from "@/types/Cotizacion";
+import { useEffect, useState } from "react";
+
+interface Cotizacion {
+  idCotizacion: number;
+  idSolicitud: string;
+  materiales: string;
+  cantidad: number;
+  precioTotal: number;
+  fechaEmision: string;
+  estado: string;
+}
 
 export default function CotizacionesPage() {
-  const [cotizaciones, setCotizaciones] =
-    useState<Cotizacion[]>([]);
+  const [idSolicitud, setIdSolicitud] = useState("");
+  const [materiales, setMateriales] = useState("");
+  const [cantidad, setCantidad] = useState("");
+  const [precioTotal, setPrecioTotal] = useState("");
+  const [fechaEmision, setFechaEmision] = useState("");
+  const [estado, setEstado] = useState("Pendiente");
 
-  const [precioTotal, setPrecioTotal] =
-    useState("");
+  const [cotizaciones, setCotizaciones] = useState<Cotizacion[]>([]);
 
+  // Cargar desde localStorage
   useEffect(() => {
-    const data =
-      localStorage.getItem("cotizaciones");
+    const datos = localStorage.getItem("cotizaciones");
 
-    if (data) {
-      setCotizaciones(JSON.parse(data));
+    if (datos) {
+      setCotizaciones(JSON.parse(datos));
     }
   }, []);
 
-  const agregarCotizacion = () => {
-    const nueva: Cotizacion = {
-      id: Date.now(),
-      solicitudId: 1,
-      materiales: "PVC",
-      cantidad: 1,
-      precioTotal: Number(precioTotal),
-      fechaEmision: new Date()
-        .toISOString()
-        .split("T")[0],
-      estado: "Pendiente",
-    };
-
-    const lista = [...cotizaciones, nueva];
-
-    setCotizaciones(lista);
-
+  // Guardar en localStorage
+  useEffect(() => {
     localStorage.setItem(
       "cotizaciones",
-      JSON.stringify(lista)
+      JSON.stringify(cotizaciones)
+    );
+  }, [cotizaciones]);
+
+  const guardarCotizacion = () => {
+    if (
+      !idSolicitud ||
+      !materiales ||
+      !cantidad ||
+      !precioTotal ||
+      !fechaEmision
+    ) {
+      alert("Complete todos los campos");
+      return;
+    }
+
+    const nuevaCotizacion: Cotizacion = {
+      idCotizacion: Date.now(),
+      idSolicitud,
+      materiales,
+      cantidad: Number(cantidad),
+      precioTotal: Number(precioTotal),
+      fechaEmision,
+      estado,
+    };
+
+    setCotizaciones((prev) => [
+      ...prev,
+      nuevaCotizacion,
+    ]);
+
+    setIdSolicitud("");
+    setMateriales("");
+    setCantidad("");
+    setPrecioTotal("");
+    setFechaEmision("");
+    setEstado("Pendiente");
+
+    alert("Cotización guardada correctamente");
+  };
+
+  const eliminarCotizacion = (
+    idCotizacion: number
+  ) => {
+    const confirmar = confirm(
+      "¿Desea eliminar esta cotización?"
     );
 
-    setPrecioTotal("");
+    if (!confirmar) return;
+
+    setCotizaciones((prev) =>
+      prev.filter(
+        (cotizacion) =>
+          cotizacion.idCotizacion !== idCotizacion
+      )
+    );
   };
 
   return (
-    <div>
-      <h1>Cotizaciones</h1>
+    <div style={{ padding: "20px" }}>
+      <h1>Gestión de Cotizaciones</h1>
+
+      <input
+        type="text"
+        placeholder="ID Solicitud"
+        value={idSolicitud}
+        onChange={(e) =>
+          setIdSolicitud(e.target.value)
+        }
+      />
+
+      <br />
+      <br />
+
+      <input
+        type="text"
+        placeholder="Materiales Incluidos"
+        value={materiales}
+        onChange={(e) =>
+          setMateriales(e.target.value)
+        }
+      />
+
+      <br />
+      <br />
 
       <input
         type="number"
+        placeholder="Cantidad"
+        value={cantidad}
+        onChange={(e) =>
+          setCantidad(e.target.value)
+        }
+      />
+
+      <br />
+      <br />
+
+      <input
+        type="number"
+        placeholder="Precio Total"
         value={precioTotal}
         onChange={(e) =>
           setPrecioTotal(e.target.value)
         }
-        placeholder="Precio"
       />
 
-      <button onClick={agregarCotizacion}>
-        Agregar
+      <br />
+      <br />
+
+      <input
+        type="date"
+        value={fechaEmision}
+        onChange={(e) =>
+          setFechaEmision(e.target.value)
+        }
+      />
+
+      <br />
+      <br />
+
+      <select
+        value={estado}
+        onChange={(e) =>
+          setEstado(e.target.value)
+        }
+      >
+        <option>Pendiente</option>
+        <option>Aprobada</option>
+        <option>Rechazada</option>
+      </select>
+
+      <br />
+      <br />
+
+      <button onClick={guardarCotizacion}>
+        Guardar Cotización
       </button>
 
-      {cotizaciones.map((cotizacion) => (
-        <div key={cotizacion.id}>
-          <p>
-            ${cotizacion.precioTotal}
-          </p>
-        </div>
-      ))}
+      <hr />
+
+      <h2>Listado de Cotizaciones</h2>
+
+      {cotizaciones.length === 0 ? (
+        <p>No existen cotizaciones registradas.</p>
+      ) : (
+        cotizaciones.map((cotizacion) => (
+          <div
+            key={cotizacion.idCotizacion}
+            style={{
+              border: "1px solid #ccc",
+              padding: "10px",
+              marginBottom: "10px",
+              borderRadius: "5px",
+            }}
+          >
+            <h3>
+              Cotización #{cotizacion.idCotizacion}
+            </h3>
+
+            <p>
+              <strong>ID Solicitud:</strong>{" "}
+              {cotizacion.idSolicitud}
+            </p>
+
+            <p>
+              <strong>Materiales:</strong>{" "}
+              {cotizacion.materiales}
+            </p>
+
+            <p>
+              <strong>Cantidad:</strong>{" "}
+              {cotizacion.cantidad}
+            </p>
+
+            <p>
+              <strong>Precio Total:</strong> $
+              {cotizacion.precioTotal}
+            </p>
+
+            <p>
+              <strong>Fecha:</strong>{" "}
+              {cotizacion.fechaEmision}
+            </p>
+
+            <p>
+              <strong>Estado:</strong>{" "}
+              {cotizacion.estado}
+            </p>
+
+            <button
+              onClick={() =>
+                eliminarCotizacion(
+                  cotizacion.idCotizacion
+                )
+              }
+            >
+              Eliminar
+            </button>
+          </div>
+        ))
+      )}
     </div>
   );
 }
