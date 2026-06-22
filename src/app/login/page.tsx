@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
+import styles from "./login.module.css";
 
 export default function LoginPage() {
   const [mode, setMode] = useState<"login" | "register">("login");
@@ -69,14 +70,8 @@ export default function LoginPage() {
   };
 
   return (
-    <main
-      style={{
-        padding: "2rem",
-        maxWidth: "520px",
-        margin: "0 auto",
-      }}
-    >
-      <h1>
+    <main className={styles.main}>
+      <h1 className={styles.title}>
         {mode === "login"
           ? "Iniciar sesión"
           : "Registrar usuario"}
@@ -85,13 +80,10 @@ export default function LoginPage() {
       <form
         onSubmit={handleSubmit}
         noValidate
-        style={{
-          display: "grid",
-          gap: "1rem",
-        }}
+        className={styles.form}
       >
         {mode === "register" && (
-          <div>
+          <div className={styles.field}>
             <label htmlFor="name">Nombre</label>
             <input
               id="name"
@@ -100,16 +92,12 @@ export default function LoginPage() {
               onChange={(event) =>
                 setName(event.target.value)
               }
-              style={{
-                width: "100%",
-                padding: "0.75rem",
-                marginTop: "0.4rem",
-              }}
+              className={styles.input}
             />
           </div>
         )}
 
-        <div>
+        <div className={styles.field}>
           <label htmlFor="email">Email</label>
           <input
             id="email"
@@ -118,15 +106,11 @@ export default function LoginPage() {
             onChange={(event) =>
               setEmail(event.target.value)
             }
-            style={{
-              width: "100%",
-              padding: "0.75rem",
-              marginTop: "0.4rem",
-            }}
+            className={styles.input}
           />
         </div>
 
-        <div>
+        <div className={styles.field}>
           <label htmlFor="password">
             Contraseña
           </label>
@@ -137,16 +121,12 @@ export default function LoginPage() {
             onChange={(event) =>
               setPassword(event.target.value)
             }
-            style={{
-              width: "100%",
-              padding: "0.75rem",
-              marginTop: "0.4rem",
-            }}
+            className={styles.input}
           />
         </div>
 
         {mode === "register" && (
-          <div>
+          <div className={styles.field}>
             <label htmlFor="confirmPassword">
               Confirmar contraseña
             </label>
@@ -159,31 +139,20 @@ export default function LoginPage() {
                   event.target.value
                 )
               }
-              style={{
-                width: "100%",
-                padding: "0.75rem",
-                marginTop: "0.4rem",
-              }}
+              className={styles.input}
             />
           </div>
         )}
 
         {error && (
-          <div style={{ color: "crimson" }}>
+          <div className={styles.errorText}>
             {error}
           </div>
         )}
 
         <button
           type="submit"
-          style={{
-            width: "100%",
-            padding: "0.85rem",
-            backgroundColor: "#0f4c81",
-            color: "#fa9090",
-            border: "none",
-            cursor: "pointer",
-          }}
+          className={styles.submitButton}
         >
           {mode === "login"
             ? "Entrar"
@@ -191,12 +160,7 @@ export default function LoginPage() {
         </button>
       </form>
 
-      <div
-        style={{
-          marginTop: "1.5rem",
-          textAlign: "center",
-        }}
-      >
+      <div className={styles.switchRow}>
         {mode === "login" ? (
           <>
             ¿No tienes cuenta?{" "}
@@ -206,12 +170,7 @@ export default function LoginPage() {
                 setMode("register");
                 setError("");
               }}
-              style={{
-                color: "#0f4c81",
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-              }}
+              className={styles.switchButton}
             >
               Registrarse
             </button>
@@ -225,12 +184,7 @@ export default function LoginPage() {
                 setMode("login");
                 setError("");
               }}
-              style={{
-                color: "#0f4c81",
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-              }}
+              className={styles.switchButton}
             >
               Iniciar sesión
             </button>

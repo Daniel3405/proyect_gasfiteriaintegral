@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
+import styles from "./servicios.module.css";
 
 type Service = {
   id: string;
@@ -137,22 +138,22 @@ export default function ServiciosPage() {
   };
 
   return (
-    <main style={{ padding: "2rem", maxWidth: "1100px", margin: "0 auto" }}>
-      <header style={{ marginBottom: "2rem" }}>
+    <main className={styles.container}>
+      <header className={styles.header}>
         <h1>Gestión de servicios</h1>
         <p>Usuario: {user?.name}</p>
       </header>
 
-      <section style={{ marginBottom: "2rem" }}>
+      <section className={styles.section}>
         <h2>{editingId ? "Editar servicio" : "Agregar servicio"}</h2>
-        <form onSubmit={handleSubmit} style={{ display: "grid", gap: "1rem" }}>
+        <form onSubmit={handleSubmit} className={styles.form}>
           <div>
             <label htmlFor="nombre">Nombre</label>
             <input
               id="nombre"
               value={form.nombre}
               onChange={(event) => handleChange("nombre", event.target.value)}
-              style={{ width: "100%", padding: "0.75rem", marginTop: "0.4rem" }}
+              className={styles.input}
             />
           </div>
 
@@ -162,11 +163,11 @@ export default function ServiciosPage() {
               id="descripcion"
               value={form.descripcion}
               onChange={(event) => handleChange("descripcion", event.target.value)}
-              style={{ width: "100%", padding: "0.75rem", marginTop: "0.4rem" }}
+              className={styles.input}
             />
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+          <div className={styles.gridTwo}>
             <div>
               <label htmlFor="precio">Precio</label>
               <input
@@ -174,7 +175,7 @@ export default function ServiciosPage() {
                 type="number"
                 value={form.precio}
                 onChange={(event) => handleChange("precio", Number(event.target.value))}
-                style={{ width: "100%", padding: "0.75rem", marginTop: "0.4rem" }}
+                className={styles.input}
               />
             </div>
 
@@ -184,19 +185,19 @@ export default function ServiciosPage() {
                 id="duracion"
                 value={form.duracion}
                 onChange={(event) => handleChange("duracion", event.target.value)}
-                style={{ width: "100%", padding: "0.75rem", marginTop: "0.4rem" }}
+                className={styles.input}
               />
             </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+          <div className={styles.gridTwo}>
             <div>
               <label htmlFor="estado">Estado</label>
               <select
                 id="estado"
                 value={form.estado}
                 onChange={(event) => handleChange("estado", event.target.value)}
-                style={{ width: "100%", padding: "0.75rem", marginTop: "0.4rem" }}
+                className={styles.input}
               >
                 <option>Pendiente</option>
                 <option>En progreso</option>
@@ -210,7 +211,7 @@ export default function ServiciosPage() {
                 id="trabajador"
                 value={form.trabajador}
                 onChange={(event) => handleChange("trabajador", event.target.value)}
-                style={{ width: "100%", padding: "0.75rem", marginTop: "0.4rem" }}
+                className={styles.input}
               />
             </div>
           </div>
@@ -221,17 +222,14 @@ export default function ServiciosPage() {
               id="garantia"
               value={form.garantia}
               onChange={(event) => handleChange("garantia", event.target.value)}
-              style={{ width: "100%", padding: "0.75rem", marginTop: "0.4rem" }}
+              className={styles.input}
             />
           </div>
 
-          {error && <div style={{ color: "crimson" }}>{error}</div>}
+          {error && <div className={styles.errorText}>{error}</div>}
 
-          <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
-            <button
-              type="submit"
-              style={{ padding: "0.85rem 1.2rem", background: "#0f4c81", color: "#fff", border: "none", cursor: "pointer" }}
-            >
+          <div className={styles.buttonRow}>
+            <button type="submit" className={styles.buttonPrimary}>
               {editingId ? "Guardar cambios" : "Crear servicio"}
             </button>
 
@@ -239,7 +237,7 @@ export default function ServiciosPage() {
               <button
                 type="button"
                 onClick={resetForm}
-                style={{ padding: "0.85rem 1.2rem", background: "#999", color: "#fff", border: "none", cursor: "pointer" }}
+                className={styles.buttonSecondary}
               >
                 Cancelar edición
               </button>
@@ -249,31 +247,23 @@ export default function ServiciosPage() {
       </section>
 
       <section>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+        <div className={styles.searchRow}>
           <h2>Listado de servicios</h2>
           <input
             type="search"
             placeholder="Buscar servicios..."
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            style={{ padding: "0.75rem", width: "240px" }}
+            className={styles.searchInput}
           />
         </div>
 
         {filteredServices.length === 0 ? (
           <p>No hay servicios que coincidan.</p>
         ) : (
-          <div style={{ display: "grid", gap: "1rem" }}>
+          <div className={styles.cardGrid}>
             {filteredServices.map((service) => (
-              <article
-                key={service.id}
-                style={{
-                  border: "1px solid #fc6666",
-                  borderRadius: "12px",
-                  padding: "1rem",
-                  background: "#f37676",
-                }}
-              >
+              <article key={service.id} className={styles.card}>
                 <h3>{service.nombre}</h3>
                 <p>{service.descripcion}</p>
                 <p>
@@ -291,18 +281,18 @@ export default function ServiciosPage() {
                 <p>
                   <strong>Garantía:</strong> {service.garantia}
                 </p>
-                <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", marginTop: "0.75rem" }}>
+                <div className={styles.cardActions}>
                   <button
                     type="button"
                     onClick={() => handleEdit(service)}
-                    style={{ padding: "0.65rem 1rem", background: "#0f4c81", color: "#fff", border: "none", cursor: "pointer" }}
+                    className={styles.buttonPrimary}
                   >
                     Editar
                   </button>
                   <button
                     type="button"
                     onClick={() => handleDelete(service.id)}
-                    style={{ padding: "0.65rem 1rem", background: "#c0392b", color: "#fff", border: "none", cursor: "pointer" }}
+                    className={styles.buttonDanger}
                   >
                     Eliminar
                   </button>

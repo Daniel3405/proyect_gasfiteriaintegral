@@ -1,0 +1,78 @@
+.main {
+  padding: 2rem;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.title {
+  margin-bottom: 1.25rem;
+  color: #0f4c81;
+}
+
+.form {
+  display: grid;
+  gap: 1rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.input {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  margin-top: 0.15rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #f7fafc;
+  color: #1f2937;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #0f4c81;
+  box-shadow: 0 0 0 4px rgba(15, 76, 129, 0.12);
+}
+
+.errorText {
+  color: #c0392b;
+  font-weight: 600;
+}
+
+.submitButton {
+  width: 100%;
+  padding: 0.95rem 1rem;
+  background: #0f4c81;
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.submitButton:hover {
+  opacity: 0.95;
+  transform: translateY(-1px);
+}
+
+.switchRow {
+  margin-top: 1.5rem;
+  text-align: center;
+  color: #334155;
+}
+
+.switchButton {
+  color: #0f4c81;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.switchButton:hover {
+  text-decoration: underline;
+}

@@ -11,7 +11,7 @@ export default function Home() {
           Administración de servicios y trabajadores
         </h1>
         <p style={{ fontSize: "1.05rem", lineHeight: 1.8, color: "#39424e" }}>
-          Este proyecto es una aplicación SPA con login, gestión de servicios y gestión de trabajadores.
+          
           Inicia sesión para ver los datos, administrar tus servicios y controlar el personal.
         </p>
       </section>
