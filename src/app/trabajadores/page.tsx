@@ -20,8 +20,8 @@ export default function TrabajadoresPage() {
   const [correo, setCorreo] = useState("");
 
   const [trabajadores, setTrabajadores] = useState<Trabajador[]>([]);
+  const [busqueda, setBusqueda] = useState("");
 
-  // Cargar datos desde localStorage
   useEffect(() => {
     const datosGuardados = localStorage.getItem("trabajadores");
 
@@ -30,13 +30,25 @@ export default function TrabajadoresPage() {
     }
   }, []);
 
-  // Guardar datos en localStorage
   useEffect(() => {
     localStorage.setItem(
       "trabajadores",
       JSON.stringify(trabajadores)
     );
   }, [trabajadores]);
+
+  const trabajadoresFiltrados = trabajadores.filter(
+    (trabajador) =>
+      trabajador.nombre
+        .toLowerCase()
+        .includes(busqueda.toLowerCase()) ||
+      trabajador.apellido
+        .toLowerCase()
+        .includes(busqueda.toLowerCase()) ||
+      trabajador.especialidad
+        .toLowerCase()
+        .includes(busqueda.toLowerCase())
+  );
 
   const guardarTrabajador = () => {
     if (
@@ -72,131 +84,224 @@ export default function TrabajadoresPage() {
   };
 
   const eliminarTrabajador = (id: number) => {
-    const confirmar = confirm(
-      "¿Desea eliminar este trabajador?"
-    );
-
-    if (!confirmar) return;
+    if (!confirm("¿Desea eliminar este trabajador?")) {
+      return;
+    }
 
     setTrabajadores((prev) =>
-      prev.filter(
-        (trabajador) => trabajador.id !== id
-      )
+      prev.filter((trabajador) => trabajador.id !== id)
     );
   };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>Gestión de Trabajadores</h1>
+    <div
+      style={{
+        backgroundColor: "#f4f6f9",
+        minHeight: "100vh",
+        padding: "30px",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: "1200px",
+          margin: "0 auto",
+        }}
+      >
+        <h1
+          style={{
+            color: "#0f4c81",
+            marginBottom: "20px",
+          }}
+        >
+          👷 Gestión de Trabajadores
+        </h1>
 
-      <input
-        type="text"
-        placeholder="Nombre"
-        value={nombre}
-        onChange={(e) => setNombre(e.target.value)}
-      />
+        <div
+          style={{
+            background: "white",
+            padding: "25px",
+            borderRadius: "15px",
+            boxShadow: "0 4px 15px rgba(0, 0, 0, 0.1)",
+            marginBottom: "25px",
+          }}
+        >
+          <h2>Nuevo Trabajador</h2>
 
-      <br />
-      <br />
+          <input
+            type="text"
+            placeholder="Nombre"
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            style={inputStyle}
+          />
 
-      <input
-        type="text"
-        placeholder="Apellido"
-        value={apellido}
-        onChange={(e) => setApellido(e.target.value)}
-      />
+          <input
+            type="text"
+            placeholder="Apellido"
+            value={apellido}
+            onChange={(e) => setApellido(e.target.value)}
+            style={inputStyle}
+          />
 
-      <br />
-      <br />
+          <input
+            type="text"
+            placeholder="Especialidad"
+            value={especialidad}
+            onChange={(e) => setEspecialidad(e.target.value)}
+            style={inputStyle}
+          />
 
-      <input
-        type="text"
-        placeholder="Especialidad"
-        value={especialidad}
-        onChange={(e) => setEspecialidad(e.target.value)}
-      />
+          <input
+            type="text"
+            placeholder="Teléfono"
+            value={telefono}
+            onChange={(e) => setTelefono(e.target.value)}
+            style={inputStyle}
+          />
 
-      <br />
-      <br />
+          <input
+            type="email"
+            placeholder="Correo"
+            value={correo}
+            onChange={(e) => setCorreo(e.target.value)}
+            style={inputStyle}
+          />
 
-      <input
-        type="text"
-        placeholder="Teléfono"
-        value={telefono}
-        onChange={(e) => setTelefono(e.target.value)}
-      />
-
-      <br />
-      <br />
-
-      <input
-        type="email"
-        placeholder="Correo"
-        value={correo}
-        onChange={(e) => setCorreo(e.target.value)}
-      />
-
-      <br />
-      <br />
-
-      <button onClick={guardarTrabajador}>
-        Guardar Trabajador
-      </button>
-
-      <hr />
-
-      <h2>Listado de Trabajadores</h2>
-
-      {trabajadores.length === 0 ? (
-        <p>No existen trabajadores registrados.</p>
-      ) : (
-        trabajadores.map((trabajador) => (
-          <div
-            key={trabajador.id}
-            style={{
-              border: "1px solid #ccc",
-              padding: "10px",
-              marginBottom: "10px",
-              borderRadius: "5px",
-            }}
+          <button
+            onClick={guardarTrabajador}
+            style={guardarButton}
           >
-            <h3>
-              {trabajador.nombre}{" "}
-              {trabajador.apellido}
-            </h3>
+            Guardar Trabajador
+          </button>
+        </div>
 
-            <p>
-              <strong>Especialidad:</strong>{" "}
-              {trabajador.especialidad}
-            </p>
+        <div
+          style={{
+            background: "white",
+            padding: "25px",
+            borderRadius: "15px",
+            boxShadow: "0 4px 15px rgba(0, 0, 0, 0.1)",
+          }}
+        >
+          <h2>
+            Trabajadores Registrados ({trabajadores.length})
+          </h2>
 
-            <p>
-              <strong>Teléfono:</strong>{" "}
-              {trabajador.telefono}
-            </p>
+          <input
+            type="text"
+            placeholder="🔍 Buscar trabajador..."
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "12px",
+              marginBottom: "20px",
+              borderRadius: "8px",
+              border: "1px solid #ccc",
+            }}
+          />
 
-            <p>
-              <strong>Correo:</strong>{" "}
-              {trabajador.correo}
-            </p>
-
-            <p>
-              <strong>Estado:</strong>{" "}
-              {trabajador.estado}
-            </p>
-
-            <button
-              onClick={() =>
-                eliminarTrabajador(
-                  trabajador.id
-                )
-              }
+          {trabajadoresFiltrados.length === 0 ? (
+            <p>No existen trabajadores registrados.</p>
+          ) : (
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                marginTop: "15px",
+              }}
             >
-              Eliminar
-            </button>
-          </div>
-        ))
-      )}
+              <thead>
+                <tr
+                  style={{
+                    backgroundColor: "#0f4c81",
+                    color: "white",
+                  }}
+                >
+                  <th style={thStyle}>Nombre</th>
+                  <th style={thStyle}>Especialidad</th>
+                  <th style={thStyle}>Teléfono</th>
+                  <th style={thStyle}>Correo</th>
+                  <th style={thStyle}>Estado</th>
+                  <th style={thStyle}>Acción</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {trabajadoresFiltrados.map((trabajador) => (
+                  <tr key={trabajador.id}>
+                    <td style={tdStyle}>
+                      {trabajador.nombre} {trabajador.apellido}
+                    </td>
+
+                    <td style={tdStyle}>
+                      {trabajador.especialidad}
+                    </td>
+
+                    <td style={tdStyle}>
+                      {trabajador.telefono}
+                    </td>
+
+                    <td style={tdStyle}>
+                      {trabajador.correo}
+                    </td>
+
+                    <td style={tdStyle}>
+                      {trabajador.estado}
+                    </td>
+
+                    <td style={tdStyle}>
+                      <button
+                        onClick={() =>
+                          eliminarTrabajador(trabajador.id)
+                        }
+                        style={eliminarButton}
+                      >
+                        Eliminar
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
+
+const inputStyle = {
+  width: "100%",
+  padding: "12px",
+  marginBottom: "10px",
+  borderRadius: "8px",
+  border: "1px solid #ccc",
+};
+
+const guardarButton = {
+  backgroundColor: "#0f4c81",
+  color: "white",
+  border: "none",
+  padding: "12px 20px",
+  borderRadius: "8px",
+  cursor: "pointer",
+};
+
+const eliminarButton = {
+  backgroundColor: "#dc3545",
+  color: "white",
+  border: "none",
+  padding: "8px 12px",
+  borderRadius: "6px",
+  cursor: "pointer",
+};
+
+const thStyle = {
+  padding: "12px",
+};
+
+const tdStyle = {
+  padding: "12px",
+  borderBottom: "1px solid #ddd",
+};
