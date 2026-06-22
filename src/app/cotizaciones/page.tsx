@@ -1,37 +1,30 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-interface Cotizacion {
-  idCotizacion: number;
-  idSolicitud: string;
-  materiales: string;
-  cantidad: number;
-  precioTotal: number;
-  fechaEmision: string;
-  estado: string;
-}
+import { Cotizacion } from "@/types/Cotizacion";
 
 export default function CotizacionesPage() {
-  const [idSolicitud, setIdSolicitud] = useState("");
+  const [solicitudId, setSolicitudId] = useState("");
   const [materiales, setMateriales] = useState("");
   const [cantidad, setCantidad] = useState("");
   const [precioTotal, setPrecioTotal] = useState("");
   const [fechaEmision, setFechaEmision] = useState("");
-  const [estado, setEstado] = useState("Pendiente");
+  const [estado, setEstado] = useState<
+    "Pendiente" | "Aprobada" | "Rechazada"
+  >("Pendiente");
 
   const [cotizaciones, setCotizaciones] = useState<Cotizacion[]>([]);
 
-  // Cargar desde localStorage
+  // Cargar cotizaciones
   useEffect(() => {
-    const datos = localStorage.getItem("cotizaciones");
+    const datosGuardados = localStorage.getItem("cotizaciones");
 
-    if (datos) {
-      setCotizaciones(JSON.parse(datos));
+    if (datosGuardados) {
+      setCotizaciones(JSON.parse(datosGuardados));
     }
   }, []);
 
-  // Guardar en localStorage
+  // Guardar cotizaciones
   useEffect(() => {
     localStorage.setItem(
       "cotizaciones",
@@ -41,19 +34,19 @@ export default function CotizacionesPage() {
 
   const guardarCotizacion = () => {
     if (
-      !idSolicitud ||
-      !materiales ||
-      !cantidad ||
-      !precioTotal ||
-      !fechaEmision
+      !solicitudId.trim() ||
+      !materiales.trim() ||
+      !cantidad.trim() ||
+      !precioTotal.trim() ||
+      !fechaEmision.trim()
     ) {
       alert("Complete todos los campos");
       return;
     }
 
     const nuevaCotizacion: Cotizacion = {
-      idCotizacion: Date.now(),
-      idSolicitud,
+      id: Date.now(),
+      solicitudId: Number(solicitudId),
       materiales,
       cantidad: Number(cantidad),
       precioTotal: Number(precioTotal),
@@ -66,7 +59,7 @@ export default function CotizacionesPage() {
       nuevaCotizacion,
     ]);
 
-    setIdSolicitud("");
+    setSolicitudId("");
     setMateriales("");
     setCantidad("");
     setPrecioTotal("");
@@ -76,9 +69,7 @@ export default function CotizacionesPage() {
     alert("Cotización guardada correctamente");
   };
 
-  const eliminarCotizacion = (
-    idCotizacion: number
-  ) => {
+  const eliminarCotizacion = (id: number) => {
     const confirmar = confirm(
       "¿Desea eliminar esta cotización?"
     );
@@ -87,8 +78,7 @@ export default function CotizacionesPage() {
 
     setCotizaciones((prev) =>
       prev.filter(
-        (cotizacion) =>
-          cotizacion.idCotizacion !== idCotizacion
+        (cotizacion) => cotizacion.id !== id
       )
     );
   };
@@ -98,11 +88,11 @@ export default function CotizacionesPage() {
       <h1>Gestión de Cotizaciones</h1>
 
       <input
-        type="text"
+        type="number"
         placeholder="ID Solicitud"
-        value={idSolicitud}
+        value={solicitudId}
         onChange={(e) =>
-          setIdSolicitud(e.target.value)
+          setSolicitudId(e.target.value)
         }
       />
 
@@ -111,7 +101,7 @@ export default function CotizacionesPage() {
 
       <input
         type="text"
-        placeholder="Materiales Incluidos"
+        placeholder="Materiales incluidos"
         value={materiales}
         onChange={(e) =>
           setMateriales(e.target.value)
@@ -159,12 +149,23 @@ export default function CotizacionesPage() {
       <select
         value={estado}
         onChange={(e) =>
-          setEstado(e.target.value)
+          setEstado(
+            e.target.value as
+              | "Pendiente"
+              | "Aprobada"
+              | "Rechazada"
+          )
         }
       >
-        <option>Pendiente</option>
-        <option>Aprobada</option>
-        <option>Rechazada</option>
+        <option value="Pendiente">
+          Pendiente
+        </option>
+        <option value="Aprobada">
+          Aprobada
+        </option>
+        <option value="Rechazada">
+          Rechazada
+        </option>
       </select>
 
       <br />
@@ -183,7 +184,7 @@ export default function CotizacionesPage() {
       ) : (
         cotizaciones.map((cotizacion) => (
           <div
-            key={cotizacion.idCotizacion}
+            key={cotizacion.id}
             style={{
               border: "1px solid #ccc",
               padding: "10px",
@@ -192,12 +193,12 @@ export default function CotizacionesPage() {
             }}
           >
             <h3>
-              Cotización #{cotizacion.idCotizacion}
+              Cotización #{cotizacion.id}
             </h3>
 
             <p>
               <strong>ID Solicitud:</strong>{" "}
-              {cotizacion.idSolicitud}
+              {cotizacion.solicitudId}
             </p>
 
             <p>
@@ -228,7 +229,7 @@ export default function CotizacionesPage() {
             <button
               onClick={() =>
                 eliminarCotizacion(
-                  cotizacion.idCotizacion
+                  cotizacion.id
                 )
               }
             >
