@@ -4,35 +4,22 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
 import styles from "./servicios.module.css";
-
-type Service = {
-  id: string;
-  nombre: string;
-  descripcion: string;
-  precio: number;
-  duracion: string;
-  estado: string;
-  trabajador: string;
-  garantia: string;
-};
-
-const STORAGE_KEY = "gasfiteria-servicios";
-
-const initialFormState = {
-  nombre: "",
-  descripcion: "",
-  precio: 0,
-  duracion: "",
-  estado: "Pendiente",
-  trabajador: "",
-  garantia: "Sin garantía",
-};
+import {
+  Service,
+  ServiceFormState,
+  initialFormState,
+  loadServices,
+  saveServices,
+  buildService,
+  updateService,
+  removeService,
+} from "../../types/Servicios";
 
 export default function ServiciosPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const [services, setServices] = useState<Service[]>([]);
-  const [form, setForm] = useState(initialFormState);
+  const [services, setServices] = useState<Service[]>(() => loadServices());
+  const [form, setForm] = useState<ServiceFormState>(initialFormState);
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -40,19 +27,11 @@ export default function ServiciosPage() {
   useEffect(() => {
     if (!user) {
       router.replace("/login");
-      return;
-    }
-
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      setServices(JSON.parse(stored));
-    } else {
-      setServices([]);
     }
   }, [router, user]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(services));
+    saveServices(services);
   }, [services]);
 
   const filteredServices = useMemo(
@@ -105,9 +84,7 @@ export default function ServiciosPage() {
     };
 
     if (editingId) {
-      setServices((prev) =>
-        prev.map((item) => (item.id === editingId ? newService : item))
-      );
+      setServices((prev) => updateService(prev, newService));
     } else {
       setServices((prev) => [...prev, newService]);
     }
@@ -131,7 +108,7 @@ export default function ServiciosPage() {
   const handleDelete = (id: string) => {
     const confirmed = confirm("¿Eliminar este servicio?");
     if (!confirmed) return;
-    setServices((prev) => prev.filter((service) => service.id !== id));
+    setServices((prev) => removeService(prev, id));
     if (editingId === id) {
       resetForm();
     }
@@ -163,7 +140,7 @@ export default function ServiciosPage() {
               id="descripcion"
               value={form.descripcion}
               onChange={(event) => handleChange("descripcion", event.target.value)}
-              className={styles.input}
+              className={styles.textarea}
             />
           </div>
 
