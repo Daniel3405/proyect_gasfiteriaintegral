@@ -21,7 +21,7 @@ export default function TrabajadoresPage() {
 
   const [trabajadores, setTrabajadores] = useState<Trabajador[]>([]);
   const [busqueda, setBusqueda] = useState("");
-
+  const [editandoId, setEditandoId] = useState<number | null>(null);
   useEffect(() => {
     const datosGuardados = localStorage.getItem("trabajadores");
 
@@ -37,6 +37,16 @@ export default function TrabajadoresPage() {
     );
   }, [trabajadores]);
 
+  const editarTrabajador = (trabajador: Trabajador) => {
+  setNombre(trabajador.nombre);
+  setApellido(trabajador.apellido);
+  setEspecialidad(trabajador.especialidad);
+  setTelefono(trabajador.telefono);
+  setCorreo(trabajador.correo);
+
+  setEditandoId(trabajador.id);
+};
+
   const trabajadoresFiltrados = trabajadores.filter(
     (trabajador) =>
       trabajador.nombre
@@ -50,18 +60,37 @@ export default function TrabajadoresPage() {
         .includes(busqueda.toLowerCase())
   );
 
-  const guardarTrabajador = () => {
-    if (
-      !nombre.trim() ||
-      !apellido.trim() ||
-      !especialidad.trim() ||
-      !telefono.trim() ||
-      !correo.trim()
-    ) {
-      alert("Complete todos los campos");
-      return;
-    }
+ const guardarTrabajador = () => {
+  if (
+    !nombre.trim() ||
+    !apellido.trim() ||
+    !especialidad.trim() ||
+    !telefono.trim() ||
+    !correo.trim()
+  ) {
+    alert("Complete todos los campos");
+    return;
+  }
 
+  if (editandoId !== null) {
+    const actualizados = trabajadores.map((t) =>
+      t.id === editandoId
+        ? {
+            ...t,
+            nombre,
+            apellido,
+            especialidad,
+            telefono,
+            correo,
+          }
+        : t
+    );
+
+    setTrabajadores(actualizados);
+    setEditandoId(null);
+
+    alert("Trabajador actualizado");
+  } else {
     const nuevoTrabajador: Trabajador = {
       id: Date.now(),
       nombre,
@@ -74,15 +103,16 @@ export default function TrabajadoresPage() {
 
     setTrabajadores((prev) => [...prev, nuevoTrabajador]);
 
-    setNombre("");
-    setApellido("");
-    setEspecialidad("");
-    setTelefono("");
-    setCorreo("");
-
     alert("Trabajador guardado correctamente");
-  };
+  }
 
+  setNombre("");
+  setApellido("");
+  setEspecialidad("");
+  setTelefono("");
+  setCorreo("");
+};
+    
   const eliminarTrabajador = (id: number) => {
     if (!confirm("¿Desea eliminar este trabajador?")) {
       return;
@@ -259,6 +289,20 @@ export default function TrabajadoresPage() {
                       >
                         Eliminar
                       </button>
+                      <button
+                    onClick={() => editarTrabajador(trabajador)}
+                      style={{
+                    backgroundColor: "#ffc107",
+                    color: "black",
+                    border: "none",
+                    padding: "8px 12px",
+                     borderRadius: "6px",
+                     cursor: "pointer",
+                     marginRight: "5px",
+                    }}
+>
+                      Editar
+                    </button>
                     </td>
                   </tr>
                 ))}
