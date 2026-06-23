@@ -1,4 +1,4 @@
-export type Service = {
+export type Servicio = {
   id: string;
   nombre: string;
   descripcion: string;
@@ -9,11 +9,11 @@ export type Service = {
   garantia: string;
 };
 
-export type ServiceFormState = Omit<Service, "id">;
+export type ServicioFormState = Omit<Servicio, "id">;
 
 export const STORAGE_KEY = "gasfiteria-servicios";
 
-export const initialFormState: ServiceFormState = {
+export const initialFormState: ServicioFormState = {
   nombre: "",
   descripcion: "",
   precio: 0,
@@ -23,28 +23,28 @@ export const initialFormState: ServiceFormState = {
   garantia: "Sin garantía",
 };
 
-export function loadServices(): Service[] {
+export function loadServicios(): Servicio[] {
   if (typeof window === "undefined") return [];
   const stored = localStorage.getItem(STORAGE_KEY);
   return stored ? JSON.parse(stored) : [];
 }
 
-export function saveServices(services: Service[]) {
+export function saveServicios(services: Servicio[]) {
   if (typeof window === "undefined") return;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(services));
 }
 
-export function buildService(form: ServiceFormState, editingId: string | null): Service {
+export function buildServicio(form: ServicioFormState, editingId: string | null): Servicio {
   return {
     id: editingId ?? `${Date.now()}`,
     ...form,
   };
 }
 
-export function updateService(services: Service[], newService: Service): Service[] {
-  return services.map((item) => (item.id === newService.id ? newService : item));
+export function updateServicios(servicio: Servicio[], nServicio: Servicio): Servicio[] {
+  return servicio.map((item) => (item.id === nServicio.id ? nServicio : item));
 }
 
-export function removeService(services: Service[], id: string): Service[] {
-  return services.filter((service) => service.id !== id);
+export function removeServicios(servicio: Servicio[], id: string): Servicio[] {
+  return servicio.filter((servicio) => servicio.id !== id);
 }

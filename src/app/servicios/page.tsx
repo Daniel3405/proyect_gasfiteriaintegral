@@ -5,21 +5,21 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
 import styles from "./servicios.module.css";
 import {
-  Service,
-  ServiceFormState,
+  Servicio,
+  ServicioFormState,
   initialFormState,
-  loadServices,
-  saveServices,
-  updateService,
-  removeService,
+  loadServicios,
+  saveServicios,
+  updateServicios,
+  removeServicios,
 } from "../../types/Servicios";
 
 export default function ServiciosPage() {
   const { user } = useAuth();
   const router = useRouter();
   const esAdmin = user?.role === "admin";
-  const [services, setServices] = useState<Service[]>(() => loadServices());
-  const [form, setForm] = useState<ServiceFormState>(initialFormState);
+  const [services, setServicios] = useState<Servicio[]>(() => loadServicios());
+  const [form, setForm] = useState<ServicioFormState>(initialFormState);
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -31,19 +31,14 @@ export default function ServiciosPage() {
   }, [router, user]);
 
   useEffect(() => {
-    saveServices(services);
+    saveServicios(services);
   }, [services]);
 
   const filteredServices = useMemo(() => {
-    // si es admin ve todos, si no ve sólo sus solicitudes (trabajador === user.name)
     const visible = esAdmin ? services : services.filter((s) => s.trabajador === user?.name);
-
-    return visible.filter((service) =>
-      [service.nombre, service.descripcion, service.trabajador, service.estado]
-        .join(" ")
-        .toLowerCase()
-        .includes(search.toLowerCase().trim())
-    );
+    if (!search.trim()) return visible;
+    const q = search.toLowerCase();
+    return visible.filter((s) => s.nombre.toLowerCase().includes(q) || s.descripcion.toLowerCase().includes(q));
   }, [search, services, esAdmin, user?.name]);
 
   const handleChange = (
@@ -67,33 +62,31 @@ export default function ServiciosPage() {
       setError("Completa nombre y descripción.");
       return;
     }
-
     if (esAdmin && !form.trabajador.trim()) {
-      setError("Completa el trabajador asociado.");
+      setError("Completa el trabajador.");
       return;
     }
 
-    const newService: Service = {
-      id: editingId ?? `${Date.now()}`,
+    const nServicio: Servicio = {
+      id: editingId || `${Date.now()}`,
       nombre: form.nombre.trim(),
       descripcion: form.descripcion.trim(),
       precio: esAdmin ? Number(form.precio) : 0,
       duracion: esAdmin ? form.duracion.trim() : "",
       estado: esAdmin ? form.estado : "Solicitud",
-      trabajador: esAdmin ? form.trabajador.trim() : user?.name ?? "",
+      trabajador: esAdmin ? form.trabajador.trim() : user?.name || "",
       garantia: esAdmin ? form.garantia : "Sin garantía",
     };
 
     if (editingId) {
-      setServices((prev) => updateService(prev, newService));
+      setServicios((prev) => updateServicios(prev, nServicio));
     } else {
-      setServices((prev) => [...prev, newService]);
+      setServicios((prev) => [...prev, nServicio]);
     }
-
     resetForm();
   };
 
-  const handleEdit = (service: Service) => {
+  const handleEdit = (service: Servicio) => {
     setEditingId(service.id);
     setForm({
       nombre: service.nombre,
@@ -109,7 +102,7 @@ export default function ServiciosPage() {
   const handleDelete = (id: string) => {
     const confirmed = confirm("¿Eliminar este servicio?");
     if (!confirmed) return;
-    setServices((prev) => removeService(prev, id));
+    setServicios((prev) => removeServicios(prev, id));
     if (editingId === id) {
       resetForm();
     }
@@ -123,7 +116,7 @@ export default function ServiciosPage() {
       </header>
 
       <section className={styles.section}>
-        <h2>{esAdmin ? (editingId ? "Editar servicio" : "Agregar servicio") : "Solicitar servicio"}</h2>
+        <h2>{esAdmin ? "Crear servicio" : "Solicitar servicio"}</h2>
         <form onSubmit={handleSubmit} className={styles.form}>
           <div>
             <label htmlFor="nombre">Nombre</label>
@@ -212,22 +205,9 @@ export default function ServiciosPage() {
 
           <div className={styles.buttonRow}>
             <button type="submit" className={styles.buttonPrimary}>
-              {esAdmin
-                ? editingId
-                  ? "Guardar cambios"
-                  : "Crear servicio"
-                : "Enviar solicitud"}
+              {esAdmin ? "Crear servicio" : "Enviar solicitud"}
             </button>
-
-            {esAdmin && editingId && (
-              <button
-                type="button"
-                onClick={resetForm}
-                className={styles.buttonSecondary}
-              >
-                Cancelar edición
-              </button>
-            )}
+            {editingId && <button type="button" onClick={resetForm} className={styles.buttonSecondary}>Cancelar</button>}
           </div>
         </form>
       </section>
@@ -248,48 +228,22 @@ export default function ServiciosPage() {
           <p>No hay servicios que coincidan.</p>
         ) : (
           <div className={styles.cardGrid}>
-            {filteredServices.map((service) => (
-              <article key={service.id} className={styles.card}>
-                <h3>{service.nombre}</h3>
-                <p>{service.descripcion}</p>
-                {esAdmin ? (
+            {filteredServices.map((servicio) => (
+              <article key={servicio.id} className={styles.card}>
+                <h3>{servicio.nombre}</h3>
+                <p>{servicio.descripcion}</p>
+                {esAdmin && (
                   <>
-                    <p>
-                      <strong>Precio:</strong> ${service.precio.toLocaleString()}
-                    </p>
-                    <p>
-                      <strong>Duración:</strong> {service.duracion || "Sin duración"}
-                    </p>
-                    <p>
-                      <strong>Estado:</strong> {service.estado}
-                    </p>
-                    <p>
-                      <strong>Trabajador:</strong> {service.trabajador}
-                    </p>
-                    <p>
-                      <strong>Garantía:</strong> {service.garantia}
-                    </p>
+                    <p><strong>Precio:</strong> ${servicio.precio.toLocaleString()}</p>
+                    <p><strong>Duración:</strong> {servicio.duracion || "Sin duración"}</p>
+                    <p><strong>Estado:</strong> {servicio.estado}</p>
+                    <p><strong>Trabajador:</strong> {servicio.trabajador}</p>
+                    <p><strong>Garantía:</strong> {servicio.garantia}</p>
                     <div className={styles.cardActions}>
-                      <button
-                        type="button"
-                        onClick={() => handleEdit(service)}
-                        className={styles.buttonPrimary}
-                      >
-                        Editar
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(service.id)}
-                        className={styles.buttonDanger}
-                      >
-                        Eliminar
-                      </button>
+                      <button type="button" onClick={() => handleEdit(servicio)} className={styles.buttonPrimary}>Editar</button>
+                      <button type="button" onClick={() => handleDelete(servicio.id)} className={styles.buttonDanger}>Eliminar</button>
                     </div>
                   </>
-                ) : (
-                  <p className={styles.subText}>
-                    Este es el detalle disponible para tu solicitud.
-                  </p>
                 )}
               </article>
             ))}
