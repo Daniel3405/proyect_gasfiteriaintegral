@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Cotizacion } from "@/types/Cotizacion";
 import { useAuth } from "@/app/context/AuthContext";
+import { Cotizacion } from "@/types/Cotizacion";
 
 export default function CotizacionesPage() {
   const { user } = useAuth();
@@ -13,14 +13,22 @@ export default function CotizacionesPage() {
   const [cantidad, setCantidad] = useState("");
   const [precioTotal, setPrecioTotal] = useState("");
   const [fechaEmision, setFechaEmision] = useState("");
+
   const [estado, setEstado] = useState<
     "Pendiente" | "Aprobada" | "Rechazada"
   >("Pendiente");
 
-  const [cotizaciones, setCotizaciones] = useState<Cotizacion[]>([]);
-  const [busqueda, setBusqueda] = useState("");
-  const [editandoId, setEditandoId] = useState<number | null>(null);
-  const [cargado, setCargado] = useState(false);
+  const [cotizaciones, setCotizaciones] =
+    useState<Cotizacion[]>([]);
+
+  const [busqueda, setBusqueda] =
+    useState("");
+
+  const [editandoId, setEditandoId] =
+    useState<number | null>(null);
+
+  const [cargado, setCargado] =
+    useState(false);
 
   useEffect(() => {
     const datosGuardados =
@@ -50,16 +58,23 @@ export default function CotizacionesPage() {
     setSolicitudId(
       cotizacion.solicitudId.toString()
     );
-    setMateriales(cotizacion.materiales);
+
+    setMateriales(
+      cotizacion.materiales
+    );
+
     setCantidad(
       cotizacion.cantidad.toString()
     );
+
     setPrecioTotal(
       cotizacion.precioTotal.toString()
     );
+
     setFechaEmision(
       cotizacion.fechaEmision
     );
+
     setEstado(cotizacion.estado);
 
     setEditandoId(cotizacion.id);
@@ -84,14 +99,63 @@ export default function CotizacionesPage() {
     );
 
   const guardarCotizacion = () => {
+    if (!solicitudId.trim()) {
+      alert(
+        "El ID de solicitud es obligatorio"
+      );
+      return;
+    }
+
     if (
-      !solicitudId.trim() ||
-      !materiales.trim() ||
-      !cantidad.trim() ||
-      !precioTotal.trim() ||
-      !fechaEmision.trim()
+      Number(solicitudId) <= 0
     ) {
-      alert("Complete todos los campos");
+      alert(
+        "Ingrese un ID válido"
+      );
+      return;
+    }
+
+    if (!materiales.trim()) {
+      alert(
+        "Los materiales son obligatorios"
+      );
+      return;
+    }
+
+    if (!cantidad.trim()) {
+      alert(
+        "La cantidad es obligatoria"
+      );
+      return;
+    }
+
+    if (Number(cantidad) <= 0) {
+      alert(
+        "La cantidad debe ser mayor a 0"
+      );
+      return;
+    }
+
+    if (!precioTotal.trim()) {
+      alert(
+        "El precio es obligatorio"
+      );
+      return;
+    }
+
+    if (
+      Number(precioTotal) <= 0
+    ) {
+      alert(
+        "El precio debe ser mayor a 0"
+      );
+      return;
+    }
+
+    if (!fechaEmision.trim()) {
+      alert(
+        "La fecha es obligatoria"
+      );
       return;
     }
 
@@ -102,19 +166,26 @@ export default function CotizacionesPage() {
             ? {
                 ...c,
                 solicitudId:
-                  Number(solicitudId),
+                  Number(
+                    solicitudId
+                  ),
                 materiales,
                 cantidad:
                   Number(cantidad),
                 precioTotal:
-                  Number(precioTotal),
+                  Number(
+                    precioTotal
+                  ),
                 fechaEmision,
                 estado,
               }
             : c
         );
 
-      setCotizaciones(actualizadas);
+      setCotizaciones(
+        actualizadas
+      );
+
       setEditandoId(null);
 
       alert(
@@ -125,11 +196,16 @@ export default function CotizacionesPage() {
         {
           id: Date.now(),
           solicitudId:
-            Number(solicitudId),
+            Number(
+              solicitudId
+            ),
           materiales,
-          cantidad: Number(cantidad),
+          cantidad:
+            Number(cantidad),
           precioTotal:
-            Number(precioTotal),
+            Number(
+              precioTotal
+            ),
           fechaEmision,
           estado,
         };
@@ -163,11 +239,12 @@ export default function CotizacionesPage() {
       return;
 
     setCotizaciones((prev) =>
-      prev.filter((c) => c.id !== id)
+      prev.filter(
+        (c) => c.id !== id
+      )
     );
   };
-
-  return (
+    return (
     <div
       style={{
         backgroundColor: "#f4f6f9",
@@ -201,51 +278,45 @@ export default function CotizacionesPage() {
               marginBottom: "25px",
             }}
           >
-            <h2>
-              Nueva Cotización
-            </h2>
+            <h2>Nueva Cotización</h2>
 
             <input
+              type="number"
+              placeholder="ID Solicitud"
               value={solicitudId}
               onChange={(e) =>
-                setSolicitudId(
-                  e.target.value
-                )
+                setSolicitudId(e.target.value)
               }
-              placeholder="ID Solicitud"
               style={inputStyle}
             />
 
             <input
+              type="text"
+              placeholder="Materiales"
               value={materiales}
               onChange={(e) =>
-                setMateriales(
-                  e.target.value
-                )
+                setMateriales(e.target.value)
               }
-              placeholder="Materiales"
               style={inputStyle}
             />
 
             <input
+              type="number"
+              placeholder="Cantidad"
               value={cantidad}
               onChange={(e) =>
-                setCantidad(
-                  e.target.value
-                )
+                setCantidad(e.target.value)
               }
-              placeholder="Cantidad"
               style={inputStyle}
             />
 
             <input
+              type="number"
+              placeholder="Precio Total"
               value={precioTotal}
               onChange={(e) =>
-                setPrecioTotal(
-                  e.target.value
-                )
+                setPrecioTotal(e.target.value)
               }
-              placeholder="Precio Total"
               style={inputStyle}
             />
 
@@ -253,12 +324,12 @@ export default function CotizacionesPage() {
               type="date"
               value={fechaEmision}
               onChange={(e) =>
-                setFechaEmision(
-                  e.target.value
-                )
+                setFechaEmision(e.target.value)
               }
               style={inputStyle}
-            />            <select
+            />
+
+            <select
               value={estado}
               onChange={(e) =>
                 setEstado(
@@ -307,11 +378,12 @@ export default function CotizacionesPage() {
           </h2>
 
           <input
+            type="text"
+            placeholder="🔍 Buscar..."
             value={busqueda}
             onChange={(e) =>
               setBusqueda(e.target.value)
             }
-            placeholder="🔍 Buscar..."
             style={{
               width: "100%",
               padding: "12px",
@@ -341,30 +413,23 @@ export default function CotizacionesPage() {
                     color: "white",
                   }}
                 >
-                  <th style={thStyle}>
-                    ID
-                  </th>
-
+                  <th style={thStyle}>ID</th>
                   <th style={thStyle}>
                     Solicitud
                   </th>
 
                   {esAdmin && (
-                    <th style={thStyle}>
-                      Materiales
-                    </th>
-                  )}
-
-                  {esAdmin && (
-                    <th style={thStyle}>
-                      Cantidad
-                    </th>
-                  )}
-
-                  {esAdmin && (
-                    <th style={thStyle}>
-                      Precio
-                    </th>
+                    <>
+                      <th style={thStyle}>
+                        Materiales
+                      </th>
+                      <th style={thStyle}>
+                        Cantidad
+                      </th>
+                      <th style={thStyle}>
+                        Precio
+                      </th>
+                    </>
                   )}
 
                   <th style={thStyle}>
@@ -400,9 +465,7 @@ export default function CotizacionesPage() {
                       </td>
 
                       {esAdmin && (
-                        <td
-                          style={tdStyle}
-                        >
+                        <td style={tdStyle}>
                           {
                             cotizacion.materiales
                           }
@@ -410,9 +473,7 @@ export default function CotizacionesPage() {
                       )}
 
                       {esAdmin && (
-                        <td
-                          style={tdStyle}
-                        >
+                        <td style={tdStyle}>
                           {
                             cotizacion.cantidad
                           }
@@ -420,9 +481,7 @@ export default function CotizacionesPage() {
                       )}
 
                       {esAdmin && (
-                        <td
-                          style={tdStyle}
-                        >
+                        <td style={tdStyle}>
                           $
                           {cotizacion.precioTotal.toLocaleString(
                             "es-CL"
@@ -443,18 +502,14 @@ export default function CotizacionesPage() {
                       </td>
 
                       {esAdmin && (
-                        <td
-                          style={tdStyle}
-                        >
+                        <td style={tdStyle}>
                           <button
                             onClick={() =>
                               editarCotizacion(
                                 cotizacion
                               )
                             }
-                            style={
-                              editarButton
-                            }
+                            style={editarButton}
                           >
                             Editar
                           </button>
@@ -465,9 +520,7 @@ export default function CotizacionesPage() {
                                 cotizacion.id
                               )
                             }
-                            style={
-                              eliminarButton
-                            }
+                            style={eliminarButton}
                           >
                             Eliminar
                           </button>
@@ -483,7 +536,8 @@ export default function CotizacionesPage() {
       </div>
     </div>
   );
-};
+}
+
 const inputStyle = {
   width: "100%",
   padding: "12px",

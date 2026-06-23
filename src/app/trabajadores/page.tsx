@@ -55,7 +55,9 @@ export default function TrabajadoresPage() {
   ) => {
     setNombre(trabajador.nombre);
     setApellido(trabajador.apellido);
-    setEspecialidad(trabajador.especialidad);
+    setEspecialidad(
+      trabajador.especialidad
+    );
     setTelefono(trabajador.telefono);
     setCorreo(trabajador.correo);
 
@@ -67,24 +69,56 @@ export default function TrabajadoresPage() {
       (trabajador) =>
         trabajador.nombre
           .toLowerCase()
-          .includes(busqueda.toLowerCase()) ||
+          .includes(
+            busqueda.toLowerCase()
+          ) ||
         trabajador.apellido
           .toLowerCase()
-          .includes(busqueda.toLowerCase()) ||
+          .includes(
+            busqueda.toLowerCase()
+          ) ||
         trabajador.especialidad
           .toLowerCase()
-          .includes(busqueda.toLowerCase())
+          .includes(
+            busqueda.toLowerCase()
+          )
     );
 
   const guardarTrabajador = () => {
-    if (
-      !nombre.trim() ||
-      !apellido.trim() ||
-      !especialidad.trim() ||
-      !telefono.trim() ||
-      !correo.trim()
-    ) {
-      alert("Complete todos los campos");
+    if (!nombre.trim()) {
+      alert("El nombre es obligatorio");
+      return;
+    }
+
+    if (!apellido.trim()) {
+      alert("El apellido es obligatorio");
+      return;
+    }
+
+    if (!especialidad.trim()) {
+      alert(
+        "La especialidad es obligatoria"
+      );
+      return;
+    }
+
+    if (!telefono.trim()) {
+      alert("El teléfono es obligatorio");
+      return;
+    }
+
+    if (telefono.length < 8) {
+      alert("Ingrese un teléfono válido");
+      return;
+    }
+
+    if (!correo.trim()) {
+      alert("El correo es obligatorio");
+      return;
+    }
+
+    if (!correo.includes("@")) {
+      alert("Ingrese un correo válido");
       return;
     }
 
@@ -108,15 +142,16 @@ export default function TrabajadoresPage() {
 
       alert("Trabajador actualizado");
     } else {
-      const nuevoTrabajador: Trabajador = {
-        id: Date.now(),
-        nombre,
-        apellido,
-        especialidad,
-        telefono,
-        correo,
-        estado: "Disponible",
-      };
+      const nuevoTrabajador: Trabajador =
+        {
+          id: Date.now(),
+          nombre,
+          apellido,
+          especialidad,
+          telefono,
+          correo,
+          estado: "Disponible",
+        };
 
       setTrabajadores((prev) => [
         ...prev,
@@ -153,8 +188,7 @@ export default function TrabajadoresPage() {
       )
     );
   };
-
-  return (
+    return (
     <div
       style={{
         backgroundColor: "#f4f6f9",
@@ -184,7 +218,7 @@ export default function TrabajadoresPage() {
               padding: "25px",
               borderRadius: "15px",
               boxShadow:
-                "0 4px 15px rgba(0, 0, 0, 0.1)",
+                "0 4px 15px rgba(0,0,0,0.1)",
               marginBottom: "25px",
             }}
           >
@@ -227,7 +261,9 @@ export default function TrabajadoresPage() {
               placeholder="Teléfono"
               value={telefono}
               onChange={(e) =>
-                setTelefono(e.target.value)
+                setTelefono(
+                  e.target.value
+                )
               }
               style={inputStyle}
             />
@@ -240,7 +276,9 @@ export default function TrabajadoresPage() {
                 setCorreo(e.target.value)
               }
               style={inputStyle}
-            />            <button
+            />
+
+            <button
               onClick={guardarTrabajador}
               style={guardarButton}
             >
@@ -257,7 +295,7 @@ export default function TrabajadoresPage() {
             padding: "25px",
             borderRadius: "15px",
             boxShadow:
-              "0 4px 15px rgba(0, 0, 0, 0.1)",
+              "0 4px 15px rgba(0,0,0,0.1)",
           }}
         >
           <h2>
@@ -281,7 +319,8 @@ export default function TrabajadoresPage() {
             }}
           />
 
-          {trabajadoresFiltrados.length === 0 ? (
+          {trabajadoresFiltrados.length ===
+          0 ? (
             <p>
               No existen trabajadores
               registrados.
@@ -290,8 +329,8 @@ export default function TrabajadoresPage() {
             <table
               style={{
                 width: "100%",
-                borderCollapse: "collapse",
-                marginTop: "15px",
+                borderCollapse:
+                  "collapse",
               }}
             >
               <thead>
@@ -306,30 +345,28 @@ export default function TrabajadoresPage() {
                     Nombre
                   </th>
 
-                  {esAdmin && (
-                    <th style={thStyle}>
-                      Especialidad
-                    </th>
-                  )}
-
-                  {esAdmin && (
-                    <th style={thStyle}>
-                      Teléfono
-                    </th>
-                  )}
+                  <th style={thStyle}>
+                    Especialidad
+                  </th>
 
                   <th style={thStyle}>
                     Correo
                   </th>
 
-                  <th style={thStyle}>
-                    Estado
-                  </th>
-
                   {esAdmin && (
-                    <th style={thStyle}>
-                      Acción
-                    </th>
+                    <>
+                      <th style={thStyle}>
+                        Teléfono
+                      </th>
+
+                      <th style={thStyle}>
+                        Estado
+                      </th>
+
+                      <th style={thStyle}>
+                        Acción
+                      </th>
+                    </>
                   )}
                 </tr>
               </thead>
@@ -338,7 +375,9 @@ export default function TrabajadoresPage() {
                 {trabajadoresFiltrados.map(
                   (trabajador) => (
                     <tr
-                      key={trabajador.id}
+                      key={
+                        trabajador.id
+                      }
                     >
                       <td style={tdStyle}>
                         {
@@ -349,25 +388,11 @@ export default function TrabajadoresPage() {
                         }
                       </td>
 
-                      {esAdmin && (
-                        <td
-                          style={tdStyle}
-                        >
-                          {
-                            trabajador.especialidad
-                          }
-                        </td>
-                      )}
-
-                      {esAdmin && (
-                        <td
-                          style={tdStyle}
-                        >
-                          {
-                            trabajador.telefono
-                          }
-                        </td>
-                      )}
+                      <td style={tdStyle}>
+                        {
+                          trabajador.especialidad
+                        }
+                      </td>
 
                       <td style={tdStyle}>
                         {
@@ -375,55 +400,73 @@ export default function TrabajadoresPage() {
                         }
                       </td>
 
-                      <td style={tdStyle}>
-                        {
-                          trabajador.estado
-                        }
-                      </td>
-
                       {esAdmin && (
-                        <td
-                          style={tdStyle}
-                        >
-                          <button
-                            onClick={() =>
-                              editarTrabajador(
-                                trabajador
-                              )
-                            }
-                            style={{
-                              backgroundColor:
-                                "#ffc107",
-                              color:
-                                "black",
-                              border:
-                                "none",
-                              padding:
-                                "8px 12px",
-                              borderRadius:
-                                "6px",
-                              cursor:
-                                "pointer",
-                              marginRight:
-                                "5px",
-                            }}
-                          >
-                            Editar
-                          </button>
-
-                          <button
-                            onClick={() =>
-                              eliminarTrabajador(
-                                trabajador.id
-                              )
-                            }
+                        <>
+                          <td
                             style={
-                              eliminarButton
+                              tdStyle
                             }
                           >
-                            Eliminar
-                          </button>
-                        </td>
+                            {
+                              trabajador.telefono
+                            }
+                          </td>
+
+                          <td
+                            style={
+                              tdStyle
+                            }
+                          >
+                            {
+                              trabajador.estado
+                            }
+                          </td>
+
+                          <td
+                            style={
+                              tdStyle
+                            }
+                          >
+                            <button
+                              onClick={() =>
+                                editarTrabajador(
+                                  trabajador
+                                )
+                              }
+                              style={{
+                                backgroundColor:
+                                  "#ffc107",
+                                color:
+                                  "black",
+                                border:
+                                  "none",
+                                padding:
+                                  "8px 12px",
+                                borderRadius:
+                                  "6px",
+                                cursor:
+                                  "pointer",
+                                marginRight:
+                                  "5px",
+                              }}
+                            >
+                              Editar
+                            </button>
+
+                            <button
+                              onClick={() =>
+                                eliminarTrabajador(
+                                  trabajador.id
+                                )
+                              }
+                              style={
+                                eliminarButton
+                              }
+                            >
+                              Eliminar
+                            </button>
+                          </td>
+                        </>
                       )}
                     </tr>
                   )
@@ -470,4 +513,4 @@ const thStyle = {
 const tdStyle = {
   padding: "12px",
   borderBottom: "1px solid #ddd",
-}
+};
