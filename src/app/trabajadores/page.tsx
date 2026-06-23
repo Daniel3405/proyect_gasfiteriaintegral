@@ -19,23 +19,29 @@ export default function TrabajadoresPage() {
   const [telefono, setTelefono] = useState("");
   const [correo, setCorreo] = useState("");
 
-  const [trabajadores, setTrabajadores] = useState<Trabajador[]>([]);
-  const [busqueda, setBusqueda] = useState("");
-  const [editandoId, setEditandoId] = useState<number | null>(null);
-  useEffect(() => {
-    const datosGuardados = localStorage.getItem("trabajadores");
+const [trabajadores, setTrabajadores] = useState<Trabajador[]>([]);
+const [busqueda, setBusqueda] = useState("");
+const [editandoId, setEditandoId] = useState<number | null>(null);
+const [cargado, setCargado] = useState(false);
 
-    if (datosGuardados) {
-      setTrabajadores(JSON.parse(datosGuardados));
-    }
-  }, []);
+useEffect(() => {
+  const datosGuardados = localStorage.getItem("trabajadores");
 
-  useEffect(() => {
-    localStorage.setItem(
-      "trabajadores",
-      JSON.stringify(trabajadores)
-    );
-  }, [trabajadores]);
+  if (datosGuardados) {
+    setTrabajadores(JSON.parse(datosGuardados));
+  }
+
+  setCargado(true);
+}, []);
+
+useEffect(() => {
+  if (!cargado) return;
+
+  localStorage.setItem(
+    "trabajadores",
+    JSON.stringify(trabajadores)
+  );
+}, [trabajadores, cargado]);
 
   const editarTrabajador = (trabajador: Trabajador) => {
   setNombre(trabajador.nombre);

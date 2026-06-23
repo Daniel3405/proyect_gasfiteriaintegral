@@ -13,22 +13,31 @@ export default function CotizacionesPage() {
     "Pendiente" | "Aprobada" | "Rechazada"
   >("Pendiente");
 
-  const [cotizaciones, setCotizaciones] = useState<Cotizacion[]>([]);
-  const [busqueda, setBusqueda] = useState("");
-  const [editandoId, setEditandoId] = useState<number | null>(null);
+const [cotizaciones, setCotizaciones] = useState<Cotizacion[]>([]);
+const [busqueda, setBusqueda] = useState("");
+const [editandoId, setEditandoId] = useState<number | null>(null);
+const [cargado, setCargado] = useState(false);
+useEffect(() => {
+  const datosGuardados =
+    localStorage.getItem("cotizaciones");
 
-  useEffect(() => {
-    const datosGuardados = localStorage.getItem("cotizaciones");
+  if (datosGuardados) {
+    setCotizaciones(
+      JSON.parse(datosGuardados)
+    );
+  }
 
-    if (datosGuardados) {
-      setCotizaciones(JSON.parse(datosGuardados));
-    }
-  }, []);
+  setCargado(true);
+}, []);
 
-  useEffect(() => {
-    localStorage.setItem("cotizaciones", JSON.stringify(cotizaciones));
-  }, [cotizaciones]);
+useEffect(() => {
+  if (!cargado) return;
 
+  localStorage.setItem(
+    "cotizaciones",
+    JSON.stringify(cotizaciones)
+  );
+}, [cotizaciones, cargado]);
   const editarCotizacion = (cotizacion: Cotizacion) => {
     setSolicitudId(cotizacion.solicitudId.toString());
     setMateriales(cotizacion.materiales);
