@@ -2,6 +2,8 @@ export type Servicio = {
   id: string;
   nombre: string;
   descripcion: string;
+  telefono: string;
+  rut: string;
   precio: number;
   duracion: string;
   estado: string;
@@ -16,6 +18,8 @@ export const STORAGE_KEY = "gasfiteria-servicios";
 export const initialFormState: ServicioFormState = {
   nombre: "",
   descripcion: "",
+  telefono: "",
+  rut: "",
   precio: 0,
   duracion: "",
   estado: "Pendiente",
@@ -26,7 +30,21 @@ export const initialFormState: ServicioFormState = {
 export function loadServicios(): Servicio[] {
   if (typeof window === "undefined") return [];
   const stored = localStorage.getItem(STORAGE_KEY);
-  return stored ? JSON.parse(stored) : [];
+  if (!stored) return [];
+
+  return JSON.parse(stored).map((item: any) => ({
+    clienteNombre: item.clienteNombre || "",
+    clienteRut: item.clienteRut || "",
+    clienteTelefono: item.clienteTelefono || "",
+    nombre: item.nombre || "",
+    descripcion: item.descripcion || "",
+    precio: item.precio ?? 0,
+    duracion: item.duracion || "",
+    estado: item.estado || "Pendiente",
+    trabajador: item.trabajador || "",
+    garantia: item.garantia || "Sin garantía",
+    id: item.id ?? `${Date.now()}`,
+  }));
 }
 
 export function saveServicios(services: Servicio[]) {

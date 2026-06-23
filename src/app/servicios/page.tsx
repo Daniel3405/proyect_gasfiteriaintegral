@@ -27,19 +27,29 @@ export default function ServiciosPage() {
   useEffect(() => {
     if (!user) {
       router.replace("/login");
+      return;
     }
-  }, [router, user]);
+
+    if (!editingId) {
+      setForm((prev) => ({
+        ...prev,
+        clienteNombre: user.nombre,
+        clienteRut: user.rut || "",
+        clienteTelefono: user.telefono || "",
+      }));
+    }
+  }, [router, user, editingId]);
 
   useEffect(() => {
     saveServicios(services);
   }, [services]);
 
   const filteredServices = useMemo(() => {
-    const visible = esAdmin ? services : services.filter((s) => s.trabajador === user?.name);
+    const visible = esAdmin ? services : services.filter((s) => s.trabajador === user?.nombre);
     if (!search.trim()) return visible;
     const q = search.toLowerCase();
     return visible.filter((s) => s.nombre.toLowerCase().includes(q) || s.descripcion.toLowerCase().includes(q));
-  }, [search, services, esAdmin, user?.name]);
+  }, [search, services, esAdmin, user?.nombre]);
 
   const handleChange = (
     field: keyof typeof initialFormState,
@@ -69,12 +79,15 @@ export default function ServiciosPage() {
 
     const nServicio: Servicio = {
       id: editingId || `${Date.now()}`,
+      clienteNombre: form.clienteNombre.trim(),
+      clienteRut: form.clienteRut.trim(),
+      clienteTelefono: form.clienteTelefono.trim(),
       nombre: form.nombre.trim(),
       descripcion: form.descripcion.trim(),
       precio: esAdmin ? Number(form.precio) : 0,
       duracion: esAdmin ? form.duracion.trim() : "",
       estado: esAdmin ? form.estado : "Solicitud",
-      trabajador: esAdmin ? form.trabajador.trim() : user?.name || "",
+      trabajador: esAdmin ? form.trabajador.trim() : user?.nombre || "",
       garantia: esAdmin ? form.garantia : "Sin garantía",
     };
 
@@ -89,6 +102,9 @@ export default function ServiciosPage() {
   const handleEdit = (service: Servicio) => {
     setEditingId(service.id);
     setForm({
+      clienteNombre: service.clienteNombre,
+      clienteRut: service.clienteRut,
+      clienteTelefono: service.clienteTelefono,
       nombre: service.nombre,
       descripcion: service.descripcion,
       precio: service.precio,
@@ -112,14 +128,44 @@ export default function ServiciosPage() {
     <main className={styles.container}>
       <header className={styles.header}>
         <h1>Gestión de servicios</h1>
-        <p>Usuario: {user?.name}</p>
+        <p>Usuario: {user?.nombre} {user?.apellido}</p>
       </header>
 
       <section className={styles.section}>
         <h2>{esAdmin ? "Crear servicio" : "Solicitar servicio"}</h2>
         <form onSubmit={handleSubmit} className={styles.form}>
           <div>
-            <label htmlFor="nombre">Nombre</label>
+            <label htmlFor="clienteNombre">Nombre</label>
+            <input
+              id="clienteNombre"
+              value={form.clienteNombre}
+              readOnly
+              className={styles.input}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="clienteRut">RUT</label>
+            <input
+              id="clienteRut"
+              value={form.clienteRut}
+              readOnly
+              className={styles.input}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="clienteTelefono">Teléfono</label>
+            <input
+              id="clienteTelefono"
+              value={form.clienteTelefono}
+              readOnly
+              className={styles.input}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="nombre">Nombre del servicio</label>
             <input
               id="nombre"
               value={form.nombre}

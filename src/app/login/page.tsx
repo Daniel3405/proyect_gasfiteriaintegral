@@ -7,8 +7,11 @@ import styles from "./login.module.css";
 
 export default function LoginPage() {
   const [mode, setMode] = useState<"login" | "register">("login");
-  const [name, setName] = useState("");
+  const [nombre, setNombre] = useState("");
+  const [apellido, setApellido] = useState("");
   const [email, setEmail] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [rut, setRut] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
@@ -29,7 +32,7 @@ export default function LoginPage() {
     if (
       !email.trim() ||
       !password.trim() ||
-      (mode === "register" && !name.trim())
+      (mode === "register" && (!nombre.trim() || !apellido.trim() || !telefono.trim() || !rut.trim()))
     ) {
       setError("Completa todos los campos obligatorios.");
       return;
@@ -42,8 +45,11 @@ export default function LoginPage() {
       }
 
       const success = register(
-        name.trim(),
+        nombre.trim(),
+        apellido.trim(),
         email.trim(),
+        telefono.trim(),
+        rut.trim(),
         password.trim()
       );
 
@@ -83,18 +89,60 @@ export default function LoginPage() {
         className={styles.form}
       >
         {mode === "register" && (
-          <div className={styles.field}>
-            <label htmlFor="name">Nombre</label>
-            <input
-              id="name"
-              type="text"
-              value={name}
-              onChange={(event) =>
-                setName(event.target.value)
-              }
-              className={styles.input}
-            />
-          </div>
+          <>
+            <div className={styles.field}>
+              <label htmlFor="name">Nombre</label>
+              <input
+                id="name"
+                type="text"
+                value={nombre}
+                onChange={(event) =>
+                  setNombre(event.target.value)
+                }
+                className={styles.input}
+              />
+            </div>
+              
+            <div className={styles.field}>
+              <label htmlFor="apellido">Apellido</label>
+              <input
+                id="apellido"
+                type="text"
+                value={apellido}
+                onChange={(event) =>
+                  setApellido(event.target.value)
+                }
+                className={styles.input}
+              />
+            </div>
+
+
+            <div className={styles.field}>
+              <label htmlFor="telefono">Teléfono</label>
+              <input
+                id="telefono"
+                type="tel"
+                value={telefono}
+                onChange={(event) =>
+                  setTelefono(event.target.value)
+                }
+                className={styles.input}
+              />
+            </div>
+
+            <div className={styles.field}>
+              <label htmlFor="rut">RUT</label>
+              <input
+                id="rut"
+                type="text"
+                value={rut}
+                onChange={(event) =>
+                  setRut(event.target.value)
+                }
+                className={styles.input}
+              />
+            </div>
+          </>
         )}
 
         <div className={styles.field}>

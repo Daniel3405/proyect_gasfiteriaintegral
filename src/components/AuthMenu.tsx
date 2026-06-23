@@ -15,7 +15,7 @@ export default function AuthMenu() {
         <div>Gasfitería Integral</div>
         <span className={styles.brandSeparator}>|</span>
         <span className={styles.brandText}>
-          {user ? `Conectado: ${user.name}` : "Invitado"}
+          {user ? `Conectado: ${user.nombre}` : "Invitado"}
         </span>
       </div>
 

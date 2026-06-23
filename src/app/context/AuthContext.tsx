@@ -3,23 +3,29 @@
 import { createContext, useContext, useEffect, useMemo, useState, ReactNode } from "react";
 
 type UserSession = {
-  name: string;
+  nombre: string;
+  apellido: string;
   email: string;
   role: string;
+  telefono?: string;
+  rut?: string;
 };
 
 type AuthContextType = {
   user: UserSession | null;
   login: (email: string, password: string) => boolean;
-  register: (name: string, email: string, password: string) => boolean;
+  register: (nombre: string, apellido: string, email: string, telefono: string, rut: string, password: string) => boolean;
   logout: () => void;
 };
 
 type StoredUser = {
-  name: string;
+  nombre: string;
+  apellido: string;
   email: string;
   password: string;
   role: string;
+  telefono: string;
+  rut: string;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,10 +35,13 @@ const USERS_KEY = "gasfiteria-users";
 
 const initialUsers: StoredUser[] = [
   {
-    name: "Administrador",
+    nombre: "Administrador",
+    apellido: "Admin",
     email: "admin@gasfiteria.com",
     password: "123456",
     role: "admin",
+    telefono: "987654321",
+    rut: "12.345.678-9",
   },
 ];
 
@@ -62,28 +71,34 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
     if (!found) return false;
 
     const session = {
-      name: found.name,
+      nombre: found.nombre,
+      apellido: found.apellido,
       email: found.email,
       role: found.role,
+      telefono: found.telefono,
+      rut: found.rut,
     };
     setUser(session);
     localStorage.setItem(SESSION_KEY, JSON.stringify(session));
     return true;
   };
 
-  const register = (name: string, email: string, password: string) => {
+  const register = (nombre: string, apellido: string, email: string, telefono: string, rut: string, password: string) => {
     const exists = users.some((item) => item.email === email);
     if (exists) return false;
 
     const newUser: StoredUser = {
-      name,
+      nombre: nombre,
+      apellido,
       email,
+      telefono,
+      rut,
       password,
       role: "user",
     };
 
     setUsers((prev) => [...prev, newUser]);
-    const session = { name, email, role: "user" };
+    const session = { nombre, apellido, email, role: "user", telefono, rut };
     setUser(session);
     localStorage.setItem(SESSION_KEY, JSON.stringify(session));
     return true;
@@ -98,7 +113,6 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
-
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
