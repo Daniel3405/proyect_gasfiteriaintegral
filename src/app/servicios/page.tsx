@@ -10,7 +10,6 @@ import {
   initialFormState,
   loadServices,
   saveServices,
-  buildService,
   updateService,
   removeService,
 } from "../../types/Servicios";
@@ -18,6 +17,7 @@ import {
 export default function ServiciosPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const esAdmin = user?.role === "admin";
   const [services, setServices] = useState<Service[]>(() => loadServices());
   const [form, setForm] = useState<ServiceFormState>(initialFormState);
   const [search, setSearch] = useState("");
@@ -34,16 +34,17 @@ export default function ServiciosPage() {
     saveServices(services);
   }, [services]);
 
-  const filteredServices = useMemo(
-    () =>
-      services.filter((service) =>
-        [service.nombre, service.descripcion, service.trabajador, service.estado]
-          .join(" ")
-          .toLowerCase()
-          .includes(search.toLowerCase().trim())
-      ),
-    [search, services]
-  );
+  const filteredServices = useMemo(() => {
+    // si es admin ve todos, si no ve sólo sus solicitudes (trabajador === user.name)
+    const visible = esAdmin ? services : services.filter((s) => s.trabajador === user?.name);
+
+    return visible.filter((service) =>
+      [service.nombre, service.descripcion, service.trabajador, service.estado]
+        .join(" ")
+        .toLowerCase()
+        .includes(search.toLowerCase().trim())
+    );
+  }, [search, services, esAdmin, user?.name]);
 
   const handleChange = (
     field: keyof typeof initialFormState,
@@ -62,13 +63,13 @@ export default function ServiciosPage() {
     event.preventDefault();
     setError("");
 
-    if (!form.nombre.trim() || !form.descripcion.trim() || !form.trabajador.trim()) {
-      setError("Completa nombre, descripción y trabajador.");
+    if (!form.nombre.trim() || !form.descripcion.trim()) {
+      setError("Completa nombre y descripción.");
       return;
     }
 
-    if (form.precio <= 0) {
-      setError("El precio debe ser mayor a 0.");
+    if (esAdmin && !form.trabajador.trim()) {
+      setError("Completa el trabajador asociado.");
       return;
     }
 
@@ -76,11 +77,11 @@ export default function ServiciosPage() {
       id: editingId ?? `${Date.now()}`,
       nombre: form.nombre.trim(),
       descripcion: form.descripcion.trim(),
-      precio: Number(form.precio),
-      duracion: form.duracion.trim(),
-      estado: form.estado,
-      trabajador: form.trabajador.trim(),
-      garantia: form.garantia,
+      precio: esAdmin ? Number(form.precio) : 0,
+      duracion: esAdmin ? form.duracion.trim() : "",
+      estado: esAdmin ? form.estado : "Solicitud",
+      trabajador: esAdmin ? form.trabajador.trim() : user?.name ?? "",
+      garantia: esAdmin ? form.garantia : "Sin garantía",
     };
 
     if (editingId) {
@@ -122,7 +123,7 @@ export default function ServiciosPage() {
       </header>
 
       <section className={styles.section}>
-        <h2>{editingId ? "Editar servicio" : "Agregar servicio"}</h2>
+        <h2>{esAdmin ? (editingId ? "Editar servicio" : "Agregar servicio") : "Solicitar servicio"}</h2>
         <form onSubmit={handleSubmit} className={styles.form}>
           <div>
             <label htmlFor="nombre">Nombre</label>
@@ -144,73 +145,81 @@ export default function ServiciosPage() {
             />
           </div>
 
-          <div className={styles.gridTwo}>
-            <div>
-              <label htmlFor="precio">Precio</label>
-              <input
-                id="precio"
-                type="number"
-                value={form.precio}
-                onChange={(event) => handleChange("precio", Number(event.target.value))}
-                className={styles.input}
-              />
-            </div>
+          {esAdmin && (
+            <>
+              <div className={styles.gridTwo}>
+                <div>
+                  <label htmlFor="precio">Precio</label>
+                  <input
+                    id="precio"
+                    type="number"
+                    value={form.precio}
+                    onChange={(event) => handleChange("precio", Number(event.target.value))}
+                    className={styles.input}
+                  />
+                </div>
 
-            <div>
-              <label htmlFor="duracion">Duración</label>
-              <input
-                id="duracion"
-                value={form.duracion}
-                onChange={(event) => handleChange("duracion", event.target.value)}
-                className={styles.input}
-              />
-            </div>
-          </div>
+                <div>
+                  <label htmlFor="duracion">Duración</label>
+                  <input
+                    id="duracion"
+                    value={form.duracion}
+                    onChange={(event) => handleChange("duracion", event.target.value)}
+                    className={styles.input}
+                  />
+                </div>
+              </div>
 
-          <div className={styles.gridTwo}>
-            <div>
-              <label htmlFor="estado">Estado</label>
-              <select
-                id="estado"
-                value={form.estado}
-                onChange={(event) => handleChange("estado", event.target.value)}
-                className={styles.input}
-              >
-                <option>Pendiente</option>
-                <option>En progreso</option>
-                <option>Finalizado</option>
-              </select>
-            </div>
+              <div className={styles.gridTwo}>
+                <div>
+                  <label htmlFor="estado">Estado</label>
+                  <select
+                    id="estado"
+                    value={form.estado}
+                    onChange={(event) => handleChange("estado", event.target.value)}
+                    className={styles.input}
+                  >
+                    <option>Pendiente</option>
+                    <option>En progreso</option>
+                    <option>Finalizado</option>
+                  </select>
+                </div>
 
-            <div>
-              <label htmlFor="trabajador">Trabajador asociado</label>
-              <input
-                id="trabajador"
-                value={form.trabajador}
-                onChange={(event) => handleChange("trabajador", event.target.value)}
-                className={styles.input}
-              />
-            </div>
-          </div>
+                <div>
+                  <label htmlFor="trabajador">Trabajador asociado</label>
+                  <input
+                    id="trabajador"
+                    value={form.trabajador}
+                    onChange={(event) => handleChange("trabajador", event.target.value)}
+                    className={styles.input}
+                  />
+                </div>
+              </div>
 
-          <div>
-            <label htmlFor="garantia">Garantía</label>
-            <input
-              id="garantia"
-              value={form.garantia}
-              onChange={(event) => handleChange("garantia", event.target.value)}
-              className={styles.input}
-            />
-          </div>
+              <div>
+                <label htmlFor="garantia">Garantía</label>
+                <input
+                  id="garantia"
+                  value={form.garantia}
+                  onChange={(event) => handleChange("garantia", event.target.value)}
+                  className={styles.input}
+                />
+              </div>
+            </>
+          )}
 
           {error && <div className={styles.errorText}>{error}</div>}
 
           <div className={styles.buttonRow}>
             <button type="submit" className={styles.buttonPrimary}>
-              {editingId ? "Guardar cambios" : "Crear servicio"}
+              {esAdmin
+                ? editingId
+                  ? "Guardar cambios"
+                  : "Crear servicio"
+                : "Enviar solicitud"}
             </button>
 
-            {editingId && (
+            {esAdmin && editingId && (
               <button
                 type="button"
                 onClick={resetForm}
@@ -243,37 +252,45 @@ export default function ServiciosPage() {
               <article key={service.id} className={styles.card}>
                 <h3>{service.nombre}</h3>
                 <p>{service.descripcion}</p>
-                <p>
-                  <strong>Precio:</strong> ${service.precio.toLocaleString()}
-                </p>
-                <p>
-                  <strong>Duración:</strong> {service.duracion || "Sin duración"}
-                </p>
-                <p>
-                  <strong>Estado:</strong> {service.estado}
-                </p>
-                <p>
-                  <strong>Trabajador:</strong> {service.trabajador}
-                </p>
-                <p>
-                  <strong>Garantía:</strong> {service.garantia}
-                </p>
-                <div className={styles.cardActions}>
-                  <button
-                    type="button"
-                    onClick={() => handleEdit(service)}
-                    className={styles.buttonPrimary}
-                  >
-                    Editar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(service.id)}
-                    className={styles.buttonDanger}
-                  >
-                    Eliminar
-                  </button>
-                </div>
+                {esAdmin ? (
+                  <>
+                    <p>
+                      <strong>Precio:</strong> ${service.precio.toLocaleString()}
+                    </p>
+                    <p>
+                      <strong>Duración:</strong> {service.duracion || "Sin duración"}
+                    </p>
+                    <p>
+                      <strong>Estado:</strong> {service.estado}
+                    </p>
+                    <p>
+                      <strong>Trabajador:</strong> {service.trabajador}
+                    </p>
+                    <p>
+                      <strong>Garantía:</strong> {service.garantia}
+                    </p>
+                    <div className={styles.cardActions}>
+                      <button
+                        type="button"
+                        onClick={() => handleEdit(service)}
+                        className={styles.buttonPrimary}
+                      >
+                        Editar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(service.id)}
+                        className={styles.buttonDanger}
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <p className={styles.subText}>
+                    Este es el detalle disponible para tu solicitud.
+                  </p>
+                )}
               </article>
             ))}
           </div>
