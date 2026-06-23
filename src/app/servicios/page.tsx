@@ -30,15 +30,15 @@ export default function ServiciosPage() {
       return;
     }
 
-    if (!editingId) {
+    if (!esAdmin && !editingId) {
       setForm((prev) => ({
         ...prev,
-        clienteNombre: user.nombre,
-        clienteRut: user.rut || "",
-        clienteTelefono: user.telefono || "",
+        nombre: user.nombre,
+        telefono: user.telefono || "",
+        rut: user.rut || "",
       }));
     }
-  }, [router, user, editingId]);
+  }, [router, user, esAdmin, editingId]);
 
   useEffect(() => {
     saveServicios(services);
@@ -79,11 +79,10 @@ export default function ServiciosPage() {
 
     const nServicio: Servicio = {
       id: editingId || `${Date.now()}`,
-      clienteNombre: form.clienteNombre.trim(),
-      clienteRut: form.clienteRut.trim(),
-      clienteTelefono: form.clienteTelefono.trim(),
       nombre: form.nombre.trim(),
       descripcion: form.descripcion.trim(),
+      telefono: form.telefono.trim(),
+      rut: form.rut.trim(),
       precio: esAdmin ? Number(form.precio) : 0,
       duracion: esAdmin ? form.duracion.trim() : "",
       estado: esAdmin ? form.estado : "Solicitud",
@@ -102,11 +101,10 @@ export default function ServiciosPage() {
   const handleEdit = (service: Servicio) => {
     setEditingId(service.id);
     setForm({
-      clienteNombre: service.clienteNombre,
-      clienteRut: service.clienteRut,
-      clienteTelefono: service.clienteTelefono,
       nombre: service.nombre,
       descripcion: service.descripcion,
+      telefono: service.telefono,
+      rut: service.rut,
       precio: service.precio,
       duracion: service.duracion,
       estado: service.estado,
@@ -135,39 +133,41 @@ export default function ServiciosPage() {
         <h2>{esAdmin ? "Crear servicio" : "Solicitar servicio"}</h2>
         <form onSubmit={handleSubmit} className={styles.form}>
           <div>
-            <label htmlFor="clienteNombre">Nombre</label>
-            <input
-              id="clienteNombre"
-              value={form.clienteNombre}
-              readOnly
-              className={styles.input}
-            />
-          </div>
-
-          <div>
-            <label htmlFor="clienteRut">RUT</label>
-            <input
-              id="clienteRut"
-              value={form.clienteRut}
-              readOnly
-              className={styles.input}
-            />
-          </div>
-
-          <div>
-            <label htmlFor="clienteTelefono">Teléfono</label>
-            <input
-              id="clienteTelefono"
-              value={form.clienteTelefono}
-              readOnly
-              className={styles.input}
-            />
-          </div>
-
-          <div>
-            <label htmlFor="nombre">Nombre del servicio</label>
+            <label htmlFor="nombre">Nombre</label>
             <input
               id="nombre"
+              value={form.nombre}
+              onChange={(event) => handleChange("nombre", event.target.value)}
+              className={styles.input}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="rut">RUT</label>
+            <input
+              id="rut"
+              value={form.rut}
+              readOnly={!esAdmin}
+              onChange={(event) => handleChange("rut", event.target.value)}
+              className={styles.input}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="telefono">Teléfono</label>
+            <input
+              id="telefono"
+              value={form.telefono}
+              readOnly={!esAdmin}
+              onChange={(event) => handleChange("telefono", event.target.value)}
+              className={styles.input}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="nombreservicio">Nombre del servicio</label>
+            <input
+              id="nombreservicio"
               value={form.nombre}
               onChange={(event) => handleChange("nombre", event.target.value)}
               className={styles.input}
