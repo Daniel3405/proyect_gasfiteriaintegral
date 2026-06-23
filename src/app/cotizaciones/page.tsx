@@ -8,6 +8,7 @@ import { Cotizacion } from "@/types/Cotizacion";
 export default function CotizacionesPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
+  const esAdmin = user?.role === "admin";
   const [solicitudId, setSolicitudId] = useState("");
   const [materiales, setMateriales] = useState("");
   const [cantidad, setCantidad] = useState("");
@@ -17,7 +18,10 @@ export default function CotizacionesPage() {
     "Pendiente" | "Aprobada" | "Rechazada"
   >("Pendiente");
 
-  const [cotizaciones, setCotizaciones] = useState<Cotizacion[]>([]);
+  const [cotizaciones, setCotizaciones] = useState<Cotizacion[]>(() => {
+    const datosGuardados = localStorage.getItem("cotizaciones");
+    return datosGuardados ? JSON.parse(datosGuardados) : [];
+  });
   const [busqueda, setBusqueda] = useState("");
   const [editandoId, setEditandoId] = useState<number | null>(null);
 
@@ -29,14 +33,6 @@ export default function CotizacionesPage() {
       return;
     }
   }, [user, router, isLoading]);
-
-  useEffect(() => {
-    const datosGuardados = localStorage.getItem("cotizaciones");
-
-    if (datosGuardados) {
-      setCotizaciones(JSON.parse(datosGuardados));
-    }
-  }, []);
 
   useEffect(() => {
     localStorage.setItem("cotizaciones", JSON.stringify(cotizaciones));
@@ -129,31 +125,33 @@ export default function CotizacionesPage() {
         </h1>
 
         {/* FORMULARIO */}
-        <div style={{ background: "white", padding: "25px", borderRadius: "15px", boxShadow: "0 4px 15px rgba(0,0,0,0.1)", marginBottom: "25px" }}>
-          <h2>Nueva Cotización</h2>
+        {esAdmin && (
+          <div style={{ background: "white", padding: "25px", borderRadius: "15px", boxShadow: "0 4px 15px rgba(0,0,0,0.1)", marginBottom: "25px" }}>
+            <h2>Nueva Cotización</h2>
 
-          <input value={solicitudId} onChange={(e) => setSolicitudId(e.target.value)} placeholder="ID Solicitud" style={inputStyle} />
-          <input value={materiales} onChange={(e) => setMateriales(e.target.value)} placeholder="Materiales" style={inputStyle} />
-          <input value={cantidad} onChange={(e) => setCantidad(e.target.value)} placeholder="Cantidad" style={inputStyle} />
-          <input value={precioTotal} onChange={(e) => setPrecioTotal(e.target.value)} placeholder="Precio Total" style={inputStyle} />
-          <input type="date" value={fechaEmision} onChange={(e) => setFechaEmision(e.target.value)} style={inputStyle} />
+            <input value={solicitudId} onChange={(e) => setSolicitudId(e.target.value)} placeholder="ID Solicitud" style={inputStyle} />
+            <input value={materiales} onChange={(e) => setMateriales(e.target.value)} placeholder="Materiales" style={inputStyle} />
+            <input value={cantidad} onChange={(e) => setCantidad(e.target.value)} placeholder="Cantidad" style={inputStyle} />
+            <input value={precioTotal} onChange={(e) => setPrecioTotal(e.target.value)} placeholder="Precio Total" style={inputStyle} />
+            <input type="date" value={fechaEmision} onChange={(e) => setFechaEmision(e.target.value)} style={inputStyle} />
 
-          <select
-            value={estado}
-            onChange={(e) =>
-              setEstado(e.target.value as "Pendiente" | "Aprobada" | "Rechazada")
-            }
-            style={inputStyle}
-          >
-            <option value="Pendiente">Pendiente</option>
-            <option value="Aprobada">Aprobada</option>
-            <option value="Rechazada">Rechazada</option>
-          </select>
+            <select
+              value={estado}
+              onChange={(e) =>
+                setEstado(e.target.value as "Pendiente" | "Aprobada" | "Rechazada")
+              }
+              style={inputStyle}
+            >
+              <option value="Pendiente">Pendiente</option>
+              <option value="Aprobada">Aprobada</option>
+              <option value="Rechazada">Rechazada</option>
+            </select>
 
-          <button onClick={guardarCotizacion} style={guardarButton}>
-            {editandoId !== null ? "Actualizar Cotización" : "Guardar Cotización"}
-          </button>
-        </div>
+            <button onClick={guardarCotizacion} style={guardarButton}>
+              {editandoId !== null ? "Actualizar Cotización" : "Guardar Cotización"}
+            </button>
+          </div>
+        )}
 
         {/* LISTADO */}
         <div style={{ background: "white", padding: "25px", borderRadius: "15px", boxShadow: "0 4px 15px rgba(0,0,0,0.1)" }}>
@@ -195,19 +193,23 @@ export default function CotizacionesPage() {
                     <td style={tdStyle}>{cotizacion.estado}</td>
 
                     <td style={tdStyle}>
-                      <button
-                        onClick={() => editarCotizacion(cotizacion)}
-                        style={editarButton}
-                      >
-                        Editar
-                      </button>
+                      {esAdmin && (
+                        <>
+                          <button
+                            onClick={() => editarCotizacion(cotizacion)}
+                            style={editarButton}
+                          >
+                            Editar
+                          </button>
 
-                      <button
-                        onClick={() => eliminarCotizacion(cotizacion.id)}
-                        style={eliminarButton}
-                      >
-                        Eliminar
-                      </button>
+                          <button
+                            onClick={() => eliminarCotizacion(cotizacion.id)}
+                            style={eliminarButton}
+                          >
+                            Eliminar
+                          </button>
+                        </>
+                      )}
                     </td>
                   </tr>
                 ))}
