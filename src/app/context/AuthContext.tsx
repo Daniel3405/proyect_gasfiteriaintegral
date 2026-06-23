@@ -13,6 +13,7 @@ type UserSession = {
 
 type AuthContextType = {
   user: UserSession | null;
+  isLoading: boolean;
   login: (email: string, password: string) => boolean;
   register: (nombre: string, apellido: string, email: string, telefono: string, rut: string, password: string) => boolean;
   logout: () => void;
@@ -48,6 +49,7 @@ const initialUsers: StoredUser[] = [
 export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [user, setUser] = useState<UserSession | null>(null);
   const [users, setUsers] = useState<StoredUser[]>(initialUsers);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const storedSession = localStorage.getItem(SESSION_KEY);
@@ -60,6 +62,8 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
     if (storedSession) {
       setUser(JSON.parse(storedSession));
     }
+
+    setIsLoading(false);
   }, []);
 
   useEffect(() => {
@@ -109,10 +113,11 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
     localStorage.removeItem(SESSION_KEY);
   };
 
-  const value = useMemo(() => ({ user, login, register, logout }), [user, users]);
+  const value = useMemo(() => ({ user, isLoading, login, register, logout }), [user, isLoading, users]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
+
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
