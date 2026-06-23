@@ -33,9 +33,9 @@ export default function ServiciosPage() {
     if (!esAdmin && !editingId) {
       setForm((prev) => ({
         ...prev,
-        nombre: user.nombre,
-        telefono: user.telefono || "",
-        rut: user.rut || "",
+        clienteNombre: user.nombre || "",
+        clienteTelefono: user.telefono || "",
+        clienteRut: user.rut || "",
       }));
     }
   }, [router, user, esAdmin, editingId]);
@@ -45,7 +45,7 @@ export default function ServiciosPage() {
   }, [services]);
 
   const filteredServices = useMemo(() => {
-    const visible = esAdmin ? services : services.filter((s) => s.trabajador === user?.nombre);
+    const visible = esAdmin ? services : services.filter((s) => s.clienteNombre === user?.nombre);
     if (!search.trim()) return visible;
     const q = search.toLowerCase();
     return visible.filter((s) => s.nombre.toLowerCase().includes(q) || s.descripcion.toLowerCase().includes(q));
@@ -81,12 +81,13 @@ export default function ServiciosPage() {
       id: editingId || `${Date.now()}`,
       nombre: form.nombre.trim(),
       descripcion: form.descripcion.trim(),
-      telefono: form.telefono.trim(),
-      rut: form.rut.trim(),
+      clienteNombre: form.clienteNombre.trim(),
+      clienteRut: form.clienteRut.trim(),
+      clienteTelefono: form.clienteTelefono.trim(),
       precio: esAdmin ? Number(form.precio) : 0,
       duracion: esAdmin ? form.duracion.trim() : "",
       estado: esAdmin ? form.estado : "Solicitud",
-      trabajador: esAdmin ? form.trabajador.trim() : user?.nombre || "",
+      trabajador: esAdmin ? form.trabajador.trim() : "",
       garantia: esAdmin ? form.garantia : "Sin garantía",
     };
 
@@ -103,8 +104,9 @@ export default function ServiciosPage() {
     setForm({
       nombre: service.nombre,
       descripcion: service.descripcion,
-      telefono: service.telefono,
-      rut: service.rut,
+      clienteNombre: service.clienteNombre,
+      clienteRut: service.clienteRut,
+      clienteTelefono: service.clienteTelefono,
       precio: service.precio,
       duracion: service.duracion,
       estado: service.estado,
@@ -132,42 +134,41 @@ export default function ServiciosPage() {
       <section className={styles.section}>
         <h2>{esAdmin ? "Crear servicio" : "Solicitar servicio"}</h2>
         <form onSubmit={handleSubmit} className={styles.form}>
+
           <div>
-            <label htmlFor="nombre">Nombre</label>
+            <label htmlFor="clienteNombre">Nombre</label>
+            <input
+              id="clienteNombre"
+              value={form.clienteNombre}
+              readOnly
+              className={styles.input}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="clienteRut">Tu RUT</label>
+            <input
+              id="clienteRut"
+              value={form.clienteRut}
+              readOnly
+              className={styles.input}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="clienteTelefono">Tu Teléfono</label>
+            <input
+              id="clienteTelefono"
+              value={form.clienteTelefono}
+              readOnly
+              className={styles.input}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="nombre">Nombre Servicio</label>
             <input
               id="nombre"
-              value={form.nombre}
-              onChange={(event) => handleChange("nombre", event.target.value)}
-              className={styles.input}
-            />
-          </div>
-
-          <div>
-            <label htmlFor="rut">RUT</label>
-            <input
-              id="rut"
-              value={form.rut}
-              readOnly={!esAdmin}
-              onChange={(event) => handleChange("rut", event.target.value)}
-              className={styles.input}
-            />
-          </div>
-
-          <div>
-            <label htmlFor="telefono">Teléfono</label>
-            <input
-              id="telefono"
-              value={form.telefono}
-              readOnly={!esAdmin}
-              onChange={(event) => handleChange("telefono", event.target.value)}
-              className={styles.input}
-            />
-          </div>
-
-          <div>
-            <label htmlFor="nombreservicio">Nombre del servicio</label>
-            <input
-              id="nombreservicio"
               value={form.nombre}
               onChange={(event) => handleChange("nombre", event.target.value)}
               className={styles.input}
@@ -280,10 +281,13 @@ export default function ServiciosPage() {
                 <p>{servicio.descripcion}</p>
                 {esAdmin && (
                   <>
+                    <p><strong>Cliente:</strong> {servicio.clienteNombre}</p>
+                    <p><strong>RUT Cliente:</strong> {servicio.clienteRut}</p>
+                    <p><strong>Teléfono Cliente:</strong> {servicio.clienteTelefono}</p>
                     <p><strong>Precio:</strong> ${servicio.precio.toLocaleString()}</p>
                     <p><strong>Duración:</strong> {servicio.duracion || "Sin duración"}</p>
                     <p><strong>Estado:</strong> {servicio.estado}</p>
-                    <p><strong>Trabajador:</strong> {servicio.trabajador}</p>
+                    <p><strong>Trabajador:</strong> {servicio.trabajador || "Sin asignar"}</p>
                     <p><strong>Garantía:</strong> {servicio.garantia}</p>
                     <div className={styles.cardActions}>
                       <button type="button" onClick={() => handleEdit(servicio)} className={styles.buttonPrimary}>Editar</button>

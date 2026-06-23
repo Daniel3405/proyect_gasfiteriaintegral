@@ -2,8 +2,9 @@ export type Servicio = {
   id: string;
   nombre: string;
   descripcion: string;
-  telefono: string;
-  rut: string;
+  clienteNombre: string;
+  clienteRut: string;
+  clienteTelefono: string;
   precio: number;
   duracion: string;
   estado: string;
@@ -18,8 +19,9 @@ export const STORAGE_KEY = "gasfiteria-servicios";
 export const initialFormState: ServicioFormState = {
   nombre: "",
   descripcion: "",
-  telefono: "",
-  rut: "",
+  clienteNombre: "",
+  clienteRut: "",
+  clienteTelefono: "",
   precio: 0,
   duracion: "",
   estado: "Pendiente",

@@ -26,6 +26,9 @@ export default function AuthMenu() {
         <MenuLink href="/servicios" active={pathname === "/servicios"}>
           Servicios
         </MenuLink>
+        <MenuLink href="/perfil" active={pathname === "/perfil"}>
+          Mi Perfil
+        </MenuLink>
         <MenuLink href="/trabajadores" active={pathname === "/trabajadores"}>
           Trabajadores
         </MenuLink>
