@@ -16,6 +16,21 @@ export default function LoginPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
 
+  const validateEmail = (value: string) =>
+    /^\S+@\S+\.\S+$/.test(value);
+
+  const validateNombre = (value: string) =>
+    /^[A-Za-zÀ-ÿ\s]+$/.test(value);
+
+    const validateApellido = (value: string) =>
+    /^[A-Za-zÀ-ÿ\s]+$/.test(value);
+
+  const validateRut = (value: string) =>
+    /^[0-9]+[-‐][0-9kK]{1}$/.test(value);
+
+  const validateTelefono = (value: string) =>
+    /^[0-9]{8,12}$/.test(value);
+
   const { user, login, register } = useAuth();
   const router = useRouter();
 
@@ -32,13 +47,44 @@ export default function LoginPage() {
     if (
       !email.trim() ||
       !password.trim() ||
-      (mode === "register" && (!nombre.trim() || !apellido.trim() || !telefono.trim() || !rut.trim()))
+      (mode === "register" && (!nombre.trim() || !apellido.trim() || !telefono.trim() || !rut.trim() || !confirmPassword.trim()))
     ) {
       setError("Completa todos los campos obligatorios.");
       return;
     }
 
+    if (!validateEmail(email.trim())) {
+      setError("Ingresa un email válido.");
+      return;
+    }
+
     if (mode === "register") {
+      if (!validateNombre(nombre.trim())) {
+        setError("Ingresa un nombre válido sin números ni símbolos.");
+        return;
+      }
+
+      if (!validateApellido(apellido.trim())) {
+        setError("Ingresa un apellido válido sin números ni símbolos.");
+        return;
+      }
+
+
+      if (!validateRut(rut.trim())) {
+        setError("Ingresa un RUT válido. Ej: 12345678-9");
+        return;
+      }
+
+      if (!validateTelefono(telefono.trim())) {
+        setError("Ingresa un teléfono válido sin espacios ni símbolos.");
+        return;
+      }
+
+      if (password.length < 6) {
+        setError("La contraseña debe tener al menos 6 caracteres.");
+        return;
+      }
+
       if (password !== confirmPassword) {
         setError("Las contraseñas no coinciden.");
         return;
