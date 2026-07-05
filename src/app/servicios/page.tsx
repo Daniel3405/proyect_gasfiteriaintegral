@@ -124,6 +124,8 @@ export default function ServiciosPage() {
     }
   };
 
+  const showClientFields = !esAdmin || Boolean(editingId);
+
   return (
     <main className={styles.container}>
       <header className={styles.header}>
@@ -135,35 +137,39 @@ export default function ServiciosPage() {
         <h2>{esAdmin ? "Crear servicio" : "Solicitar servicio"}</h2>
         <form onSubmit={handleSubmit} className={styles.form}>
 
-          <div>
-            <label htmlFor="clienteNombre">Nombre</label>
-            <input
-              id="clienteNombre"
-              value={form.clienteNombre}
-              readOnly
-              className={styles.input}
-            />
-          </div>
+          {showClientFields && (
+            <>
+              <div>
+                <label htmlFor="clienteNombre">Nombre</label>
+                <input
+                  id="clienteNombre"
+                  value={form.clienteNombre}
+                  readOnly
+                  className={styles.input}
+                />
+              </div>
 
-          <div>
-            <label htmlFor="clienteRut">Tu RUT</label>
-            <input
-              id="clienteRut"
-              value={form.clienteRut}
-              readOnly
-              className={styles.input}
-            />
-          </div>
+              <div>
+                <label htmlFor="clienteRut">Tu RUT</label>
+                <input
+                  id="clienteRut"
+                  value={form.clienteRut}
+                  readOnly
+                  className={styles.input}
+                />
+              </div>
 
-          <div>
-            <label htmlFor="clienteTelefono">Tu Teléfono</label>
-            <input
-              id="clienteTelefono"
-              value={form.clienteTelefono}
-              readOnly
-              className={styles.input}
-            />
-          </div>
+              <div>
+                <label htmlFor="clienteTelefono">Tu Teléfono</label>
+                <input
+                  id="clienteTelefono"
+                  value={form.clienteTelefono}
+                  readOnly
+                  className={styles.input}
+                />
+              </div>
+            </>
+          )}
 
           <div>
             <label htmlFor="nombre">Nombre Servicio</label>
@@ -222,6 +228,7 @@ export default function ServiciosPage() {
                     <option>Pendiente</option>
                     <option>En progreso</option>
                     <option>Finalizado</option>
+                    <option>Cancelado</option>
                   </select>
                 </div>
 
