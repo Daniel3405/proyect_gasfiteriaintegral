@@ -1,6 +1,24 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  ReactNode,
+} from "react";
+
+import {
+  User,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
+  signOut,
+} from "firebase/auth";
+
+import { auth } from "@/lib/firebase";
 
 type UserSession = {
   name: string;
@@ -10,99 +28,108 @@ type UserSession = {
 
 type AuthContextType = {
   user: UserSession | null;
-  login: (email: string, password: string) => boolean;
-  register: (name: string, email: string, password: string) => boolean;
-  logout: () => void;
-};
-
-type StoredUser = {
-  name: string;
-  email: string;
-  password: string;
-  role: string;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<boolean>;
+  register: (
+    name: string,
+    email: string,
+    password: string
+  ) => Promise<boolean>;
+  logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const SESSION_KEY = "gasfiteria-session";
-const USERS_KEY = "gasfiteria-users";
-
-const initialUsers: StoredUser[] = [
-  {
-    name: "Administrador",
-    email: "admin@gasfiteria.com",
-    password: "123456",
-    role: "admin",
-  },
-];
-
-export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
+export function AuthProvider({
+  children,
+}: Readonly<{ children: ReactNode }>) {
   const [user, setUser] = useState<UserSession | null>(null);
-  const [users, setUsers] = useState<StoredUser[]>(initialUsers);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedSession = localStorage.getItem(SESSION_KEY);
-    const storedUsers = localStorage.getItem(USERS_KEY);
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser: User | null) => {
+      if (firebaseUser) {
+        setUser({
+          name: firebaseUser.displayName ?? "Usuario",
+          email: firebaseUser.email ?? "",
+          role: "user",
+        });
+      } else {
+        setUser(null);
+      }
 
-    if (storedUsers) {
-      setUsers(JSON.parse(storedUsers));
-    }
+      setLoading(false);
+    });
 
-    if (storedSession) {
-      setUser(JSON.parse(storedSession));
-    }
+    return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem(USERS_KEY, JSON.stringify(users));
-  }, [users]);
-
-  const login = (email: string, password: string) => {
-    const found = users.find((item) => item.email === email && item.password === password);
-    if (!found) return false;
-
-    const session = {
-      name: found.name,
-      email: found.email,
-      role: found.role,
-    };
-    setUser(session);
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-    return true;
+  const login = async (
+    email: string,
+    password: string
+  ): Promise<boolean> => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      return true;
+    } catch (error) {
+      console.error(error);
+      return false;
+    }
   };
 
-  const register = (name: string, email: string, password: string) => {
-    const exists = users.some((item) => item.email === email);
-    if (exists) return false;
+  const register = async (
+    name: string,
+    email: string,
+    password: string
+  ): Promise<boolean> => {
+    try {
+      const credential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
 
-    const newUser: StoredUser = {
-      name,
-      email,
-      password,
-      role: "user",
-    };
+      await updateProfile(credential.user, {
+        displayName: name,
+      });
 
-    setUsers((prev) => [...prev, newUser]);
-    const session = { name, email, role: "user" };
-    setUser(session);
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-    return true;
+      return true;
+    } catch (error) {
+      console.error(error);
+      return false;
+    }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem(SESSION_KEY);
+  const logout = async () => {
+    await signOut(auth);
   };
 
-  const value = useMemo(() => ({ user, login, register, logout }), [user, users]);
+  const value = useMemo(
+    () => ({
+      user,
+      loading,
+      login,
+      register,
+      logout,
+    }),
+    [user, loading]
+  );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {
   const context = useContext(AuthContext);
+
   if (!context) {
-    throw new Error("useAuth must be used within AuthProvider");
+    throw new Error(
+      "useAuth must be used within AuthProvider"
+    );
   }
+
   return context;
 }
