@@ -45,11 +45,15 @@ export default function ServiciosPage() {
   }, [services]);
 
   const filteredServices = useMemo(() => {
-    const visible = esAdmin ? services : services.filter((s) => s.clienteNombre === user?.nombre);
+    const visible = esAdmin
+      ? services
+      : services.filter(
+          (s) => s.clienteNombre === user?.nombre && s.clienteRut === user?.rut
+        );
     if (!search.trim()) return visible;
     const q = search.toLowerCase();
     return visible.filter((s) => s.nombre.toLowerCase().includes(q) || s.descripcion.toLowerCase().includes(q));
-  }, [search, services, esAdmin, user?.nombre]);
+  }, [search, services, esAdmin, user?.nombre, user?.rut]);
 
   const handleChange = (
     field: keyof typeof initialFormState,

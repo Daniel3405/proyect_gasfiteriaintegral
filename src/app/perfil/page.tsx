@@ -21,12 +21,18 @@ export default function PerfilPage() {
     }
   }, [user, router]);
 
+  const esAdmin = user?.role === "admin";
+
   const misSolicitudes = useMemo(() => {
-    const filtered = services.filter((s) => s.clienteNombre === user?.nombre);
+    const filtered = esAdmin
+      ? services
+      : services.filter(
+          (s) => s.clienteNombre === user?.nombre && s.clienteRut === user?.rut
+        );
     if (!search.trim()) return filtered;
     const q = search.toLowerCase();
     return filtered.filter((s) => s.nombre.toLowerCase().includes(q) || s.descripcion.toLowerCase().includes(q));
-  }, [search, services, user?.nombre]);
+  }, [search, services, esAdmin, user?.nombre, user?.rut]);
 
   if (!user) return null;
 
