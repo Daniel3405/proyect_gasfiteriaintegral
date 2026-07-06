@@ -5,21 +5,21 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
 import styles from "./servicios.module.css";
 import {
-  Service,
-  ServiceFormState,
+  Servicio,
+  ServicioFormState,
   initialFormState,
-  loadServices,
-  saveServices,
-  buildService,
-  updateService,
-  removeService,
+  loadServicios,
+  saveServicios,
+  updateServicios,
+  removeServicios,
 } from "../../types/Servicios";
 
 export default function ServiciosPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const [services, setServices] = useState<Service[]>(() => loadServices());
-  const [form, setForm] = useState<ServiceFormState>(initialFormState);
+  const esAdmin = user?.role === "admin";
+  const [services, setServicios] = useState<Servicio[]>(() => loadServicios());
+  const [form, setForm] = useState<ServicioFormState>(initialFormState);
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -27,23 +27,33 @@ export default function ServiciosPage() {
   useEffect(() => {
     if (!user) {
       router.replace("/login");
+      return;
     }
-  }, [router, user]);
+
+    if (!esAdmin && !editingId) {
+      setForm((prev) => ({
+        ...prev,
+        clienteNombre: user.nombre || "",
+        clienteTelefono: user.telefono || "",
+        clienteRut: user.rut || "",
+      }));
+    }
+  }, [router, user, esAdmin, editingId]);
 
   useEffect(() => {
-    saveServices(services);
+    saveServicios(services);
   }, [services]);
 
-  const filteredServices = useMemo(
-    () =>
-      services.filter((service) =>
-        [service.nombre, service.descripcion, service.trabajador, service.estado]
-          .join(" ")
-          .toLowerCase()
-          .includes(search.toLowerCase().trim())
-      ),
-    [search, services]
-  );
+  const filteredServices = useMemo(() => {
+    const visible = esAdmin
+      ? services
+      : services.filter(
+          (s) => s.clienteNombre === user?.nombre && s.clienteRut === user?.rut
+        );
+    if (!search.trim()) return visible;
+    const q = search.toLowerCase();
+    return visible.filter((s) => s.nombre.toLowerCase().includes(q) || s.descripcion.toLowerCase().includes(q));
+  }, [search, services, esAdmin, user?.nombre, user?.rut]);
 
   const handleChange = (
     field: keyof typeof initialFormState,
@@ -62,41 +72,45 @@ export default function ServiciosPage() {
     event.preventDefault();
     setError("");
 
-    if (!form.nombre.trim() || !form.descripcion.trim() || !form.trabajador.trim()) {
-      setError("Completa nombre, descripción y trabajador.");
+    if (!form.nombre.trim() || !form.descripcion.trim()) {
+      setError("Completa nombre y descripción.");
+      return;
+    }
+    if (esAdmin && !form.trabajador.trim()) {
+      setError("Completa el trabajador.");
       return;
     }
 
-    if (form.precio <= 0) {
-      setError("El precio debe ser mayor a 0.");
-      return;
-    }
-
-    const newService: Service = {
-      id: editingId ?? `${Date.now()}`,
+    const nServicio: Servicio = {
+      id: editingId || `${Date.now()}`,
       nombre: form.nombre.trim(),
       descripcion: form.descripcion.trim(),
-      precio: Number(form.precio),
-      duracion: form.duracion.trim(),
-      estado: form.estado,
-      trabajador: form.trabajador.trim(),
-      garantia: form.garantia,
+      clienteNombre: form.clienteNombre.trim(),
+      clienteRut: form.clienteRut.trim(),
+      clienteTelefono: form.clienteTelefono.trim(),
+      precio: esAdmin ? Number(form.precio) : 0,
+      duracion: esAdmin ? form.duracion.trim() : "",
+      estado: esAdmin ? form.estado : "Solicitud",
+      trabajador: esAdmin ? form.trabajador.trim() : "",
+      garantia: esAdmin ? form.garantia : "Sin garantía",
     };
 
     if (editingId) {
-      setServices((prev) => updateService(prev, newService));
+      setServicios((prev) => updateServicios(prev, nServicio));
     } else {
-      setServices((prev) => [...prev, newService]);
+      setServicios((prev) => [...prev, nServicio]);
     }
-
     resetForm();
   };
 
-  const handleEdit = (service: Service) => {
+  const handleEdit = (service: Servicio) => {
     setEditingId(service.id);
     setForm({
       nombre: service.nombre,
       descripcion: service.descripcion,
+      clienteNombre: service.clienteNombre,
+      clienteRut: service.clienteRut,
+      clienteTelefono: service.clienteTelefono,
       precio: service.precio,
       duracion: service.duracion,
       estado: service.estado,
@@ -108,24 +122,61 @@ export default function ServiciosPage() {
   const handleDelete = (id: string) => {
     const confirmed = confirm("¿Eliminar este servicio?");
     if (!confirmed) return;
-    setServices((prev) => removeService(prev, id));
+    setServicios((prev) => removeServicios(prev, id));
     if (editingId === id) {
       resetForm();
     }
   };
 
+  const showClientFields = !esAdmin || Boolean(editingId);
+
   return (
     <main className={styles.container}>
       <header className={styles.header}>
         <h1>Gestión de servicios</h1>
-        <p>Usuario: {user?.name}</p>
+        <p>Usuario: {user?.nombre} {user?.apellido}</p>
       </header>
 
       <section className={styles.section}>
-        <h2>{editingId ? "Editar servicio" : "Agregar servicio"}</h2>
+        <h2>{esAdmin ? "Crear servicio" : "Solicitar servicio"}</h2>
         <form onSubmit={handleSubmit} className={styles.form}>
+
+          {showClientFields && (
+            <>
+              <div>
+                <label htmlFor="clienteNombre">Nombre</label>
+                <input
+                  id="clienteNombre"
+                  value={form.clienteNombre}
+                  readOnly
+                  className={styles.input}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="clienteRut">Tu RUT</label>
+                <input
+                  id="clienteRut"
+                  value={form.clienteRut}
+                  readOnly
+                  className={styles.input}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="clienteTelefono">Tu Teléfono</label>
+                <input
+                  id="clienteTelefono"
+                  value={form.clienteTelefono}
+                  readOnly
+                  className={styles.input}
+                />
+              </div>
+            </>
+          )}
+
           <div>
-            <label htmlFor="nombre">Nombre</label>
+            <label htmlFor="nombre">Nombre Servicio</label>
             <input
               id="nombre"
               value={form.nombre}
@@ -144,81 +195,77 @@ export default function ServiciosPage() {
             />
           </div>
 
-          <div className={styles.gridTwo}>
-            <div>
-              <label htmlFor="precio">Precio</label>
-              <input
-                id="precio"
-                type="number"
-                value={form.precio}
-                onChange={(event) => handleChange("precio", Number(event.target.value))}
-                className={styles.input}
-              />
-            </div>
+          {esAdmin && (
+            <>
+              <div className={styles.gridTwo}>
+                <div>
+                  <label htmlFor="precio">Precio</label>
+                  <input
+                    id="precio"
+                    type="number"
+                    value={form.precio}
+                    onChange={(event) => handleChange("precio", Number(event.target.value))}
+                    className={styles.input}
+                  />
+                </div>
 
-            <div>
-              <label htmlFor="duracion">Duración</label>
-              <input
-                id="duracion"
-                value={form.duracion}
-                onChange={(event) => handleChange("duracion", event.target.value)}
-                className={styles.input}
-              />
-            </div>
-          </div>
+                <div>
+                  <label htmlFor="duracion">Duración</label>
+                  <input
+                    id="duracion"
+                    value={form.duracion}
+                    onChange={(event) => handleChange("duracion", event.target.value)}
+                    className={styles.input}
+                  />
+                </div>
+              </div>
 
-          <div className={styles.gridTwo}>
-            <div>
-              <label htmlFor="estado">Estado</label>
-              <select
-                id="estado"
-                value={form.estado}
-                onChange={(event) => handleChange("estado", event.target.value)}
-                className={styles.input}
-              >
-                <option>Pendiente</option>
-                <option>En progreso</option>
-                <option>Finalizado</option>
-              </select>
-            </div>
+              <div className={styles.gridTwo}>
+                <div>
+                  <label htmlFor="estado">Estado</label>
+                  <select
+                    id="estado"
+                    value={form.estado}
+                    onChange={(event) => handleChange("estado", event.target.value)}
+                    className={styles.input}
+                  >
+                    <option>Pendiente</option>
+                    <option>En progreso</option>
+                    <option>Finalizado</option>
+                    <option>Cancelado</option>
+                  </select>
+                </div>
 
-            <div>
-              <label htmlFor="trabajador">Trabajador asociado</label>
-              <input
-                id="trabajador"
-                value={form.trabajador}
-                onChange={(event) => handleChange("trabajador", event.target.value)}
-                className={styles.input}
-              />
-            </div>
-          </div>
+                <div>
+                  <label htmlFor="trabajador">Trabajador asociado</label>
+                  <input
+                    id="trabajador"
+                    value={form.trabajador}
+                    onChange={(event) => handleChange("trabajador", event.target.value)}
+                    className={styles.input}
+                  />
+                </div>
+              </div>
 
-          <div>
-            <label htmlFor="garantia">Garantía</label>
-            <input
-              id="garantia"
-              value={form.garantia}
-              onChange={(event) => handleChange("garantia", event.target.value)}
-              className={styles.input}
-            />
-          </div>
+              <div>
+                <label htmlFor="garantia">Garantía</label>
+                <input
+                  id="garantia"
+                  value={form.garantia}
+                  onChange={(event) => handleChange("garantia", event.target.value)}
+                  className={styles.input}
+                />
+              </div>
+            </>
+          )}
 
           {error && <div className={styles.errorText}>{error}</div>}
 
           <div className={styles.buttonRow}>
             <button type="submit" className={styles.buttonPrimary}>
-              {editingId ? "Guardar cambios" : "Crear servicio"}
+              {esAdmin ? "Crear servicio" : "Enviar solicitud"}
             </button>
-
-            {editingId && (
-              <button
-                type="button"
-                onClick={resetForm}
-                className={styles.buttonSecondary}
-              >
-                Cancelar edición
-              </button>
-            )}
+            {editingId && <button type="button" onClick={resetForm} className={styles.buttonSecondary}>Cancelar</button>}
           </div>
         </form>
       </section>
@@ -239,41 +286,26 @@ export default function ServiciosPage() {
           <p>No hay servicios que coincidan.</p>
         ) : (
           <div className={styles.cardGrid}>
-            {filteredServices.map((service) => (
-              <article key={service.id} className={styles.card}>
-                <h3>{service.nombre}</h3>
-                <p>{service.descripcion}</p>
-                <p>
-                  <strong>Precio:</strong> ${service.precio.toLocaleString()}
-                </p>
-                <p>
-                  <strong>Duración:</strong> {service.duracion || "Sin duración"}
-                </p>
-                <p>
-                  <strong>Estado:</strong> {service.estado}
-                </p>
-                <p>
-                  <strong>Trabajador:</strong> {service.trabajador}
-                </p>
-                <p>
-                  <strong>Garantía:</strong> {service.garantia}
-                </p>
-                <div className={styles.cardActions}>
-                  <button
-                    type="button"
-                    onClick={() => handleEdit(service)}
-                    className={styles.buttonPrimary}
-                  >
-                    Editar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(service.id)}
-                    className={styles.buttonDanger}
-                  >
-                    Eliminar
-                  </button>
-                </div>
+            {filteredServices.map((servicio) => (
+              <article key={servicio.id} className={styles.card}>
+                <h3>{servicio.nombre}</h3>
+                <p>{servicio.descripcion}</p>
+                {esAdmin && (
+                  <>
+                    <p><strong>Cliente:</strong> {servicio.clienteNombre}</p>
+                    <p><strong>RUT Cliente:</strong> {servicio.clienteRut}</p>
+                    <p><strong>Teléfono Cliente:</strong> {servicio.clienteTelefono}</p>
+                    <p><strong>Precio:</strong> ${servicio.precio.toLocaleString()}</p>
+                    <p><strong>Duración:</strong> {servicio.duracion || "Sin duración"}</p>
+                    <p><strong>Estado:</strong> {servicio.estado}</p>
+                    <p><strong>Trabajador:</strong> {servicio.trabajador || "Sin asignar"}</p>
+                    <p><strong>Garantía:</strong> {servicio.garantia}</p>
+                    <div className={styles.cardActions}>
+                      <button type="button" onClick={() => handleEdit(servicio)} className={styles.buttonPrimary}>Editar</button>
+                      <button type="button" onClick={() => handleDelete(servicio.id)} className={styles.buttonDanger}>Eliminar</button>
+                    </div>
+                  </>
+                )}
               </article>
             ))}
           </div>

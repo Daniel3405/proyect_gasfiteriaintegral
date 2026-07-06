@@ -32,7 +32,7 @@ export default function DashboardPage() {
             fontSize: "18px",
           }}
         >
-          Sistema de administración de servicios, trabajadores y cotizaciones.
+          Sistema de servicios, trabajadores y cotizaciones.
         </p>
 
         <div
@@ -61,7 +61,7 @@ export default function DashboardPage() {
               </h2>
 
               <p style={{ color: "#555" }}>
-                Administrar solicitudes de servicios
+                Solicitudes de servicios
                 de gasfitería.
               </p>
             </div>
@@ -86,7 +86,7 @@ export default function DashboardPage() {
               </h2>
 
               <p style={{ color: "#555" }}>
-                Gestionar personal, especialidades
+                Personal, especialidades
                 y disponibilidad.
               </p>
             </div>
@@ -111,8 +111,7 @@ export default function DashboardPage() {
               </h2>
 
               <p style={{ color: "#555" }}>
-                Crear y administrar cotizaciones
-                para los clientes.
+                cotizaciones.
               </p>
             </div>
           </Link>
@@ -133,9 +132,8 @@ export default function DashboardPage() {
 
           <p>
             Bienvenido a la Intranet de Gasfitería
-            Integral. Desde aquí puedes administrar
-            solicitudes, trabajadores y cotizaciones
-            del negocio.
+            Integral. Desde aquí puedes 
+            solicitar nuestros servicios, trabajadores y cotizaciones.
           </p>
         </div>
       </div>

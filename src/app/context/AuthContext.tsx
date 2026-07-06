@@ -21,99 +21,100 @@ import {
 import { auth } from "@/lib/firebase";
 
 type UserSession = {
-  name: string;
+  nombre: string;
+  apellido: string;
   email: string;
   role: string;
+  telefono?: string;
+  rut?: string;
 };
 
 type AuthContextType = {
   user: UserSession | null;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
-  register: (
-    name: string,
-    email: string,
-    password: string
-  ) => Promise<boolean>;
-  logout: () => Promise<void>;
+  login: (email: string, password: string) => boolean;
+  register: (name: string, email: string, password: string) => boolean;
+  logout: () => void;
+};
+
+type StoredUser = {
+  name: string;
+  email: string;
+  password: string;
+  role: string;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({
-  children,
-}: Readonly<{ children: ReactNode }>) {
+const SESSION_KEY = "gasfiteria-session";
+const USERS_KEY = "gasfiteria-users";
+
+const initialUsers: StoredUser[] = [
+  {
+    name: "Administrador",
+    email: "admin@gasfiteria.com",
+    password: "123456",
+    role: "admin",
+  },
+];
+
+export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [user, setUser] = useState<UserSession | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [users, setUsers] = useState<StoredUser[]>(initialUsers);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser: User | null) => {
-      if (firebaseUser) {
-        setUser({
-          name: firebaseUser.displayName ?? "Usuario",
-          email: firebaseUser.email ?? "",
-          role: "user",
-        });
-      } else {
-        setUser(null);
-      }
+    const storedSession = localStorage.getItem(SESSION_KEY);
+    const storedUsers = localStorage.getItem(USERS_KEY);
 
-      setLoading(false);
-    });
+    if (storedUsers) {
+      setUsers(JSON.parse(storedUsers));
+    }
 
-    return () => unsubscribe();
+    if (storedSession) {
+      setUser(JSON.parse(storedSession));
+    }
   }, []);
 
-  const login = async (
-    email: string,
-    password: string
-  ): Promise<boolean> => {
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      return true;
-    } catch (error) {
-      console.error(error);
-      return false;
-    }
+  useEffect(() => {
+    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  }, [users]);
+
+  const login = (email: string, password: string) => {
+    const found = users.find((item) => item.email === email && item.password === password);
+    if (!found) return false;
+
+    const session = {
+      name: found.name,
+      email: found.email,
+      role: found.role,
+    };
+    setUser(session);
+    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    return true;
   };
 
-  const register = async (
-    name: string,
-    email: string,
-    password: string
-  ): Promise<boolean> => {
-    try {
-      const credential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
+  const register = (name: string, email: string, password: string) => {
+    const exists = users.some((item) => item.email === email);
+    if (exists) return false;
 
-      await updateProfile(credential.user, {
-        displayName: name,
-      });
+    const newUser: StoredUser = {
+      name,
+      email,
+      password,
+      role: "user",
+    };
 
-      return true;
-    } catch (error) {
-      console.error(error);
-      return false;
-    }
+    setUsers((prev) => [...prev, newUser]);
+    const session = { name, email, role: "user" };
+    setUser(session);
+    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    return true;
   };
 
   const logout = async () => {
     await signOut(auth);
   };
 
-  const value = useMemo(
-    () => ({
-      user,
-      loading,
-      login,
-      register,
-      logout,
-    }),
-    [user, loading]
-  );
+  const value = useMemo(() => ({ user, login, register, logout }), [user, users]);
 
   return (
     <AuthContext.Provider value={value}>

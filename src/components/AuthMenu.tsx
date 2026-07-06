@@ -15,7 +15,7 @@ export default function AuthMenu() {
         <div>Gasfitería Integral</div>
         <span className={styles.brandSeparator}>|</span>
         <span className={styles.brandText}>
-          {user ? `Conectado: ${user.name}` : "Invitado"}
+          {user ? `Conectado: ${user?.nombre || user?.email || "Usuario"}` : "Invitado"}
         </span>
       </div>
 
@@ -25,6 +25,9 @@ export default function AuthMenu() {
         </MenuLink>
         <MenuLink href="/servicios" active={pathname === "/servicios"}>
           Servicios
+        </MenuLink>
+        <MenuLink href="/perfil" active={pathname === "/perfil"}>
+          Mi Perfil
         </MenuLink>
         <MenuLink href="/trabajadores" active={pathname === "/trabajadores"}>
           Trabajadores
