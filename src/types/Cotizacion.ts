@@ -1,6 +1,6 @@
 export interface Cotizacion {
   id: number;
-  solicitudId: number;
+  solicitudId: string;
   materiales: string;
   cantidad: number;
   precioTotal: number;

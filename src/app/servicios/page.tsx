@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
 import styles from "./servicios.module.css";
+import type { Trabajador } from "../../types/Trabajador";
 import {
   Servicio,
   ServicioFormState,
@@ -23,6 +24,19 @@ export default function ServiciosPage() {
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [trabajadores, setTrabajadores] = useState<Trabajador[]>(() => {
+    if (typeof window === "undefined") return [];
+    const saved = localStorage.getItem("trabajadores");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = localStorage.getItem("trabajadores");
+    if (saved) {
+      setTrabajadores(JSON.parse(saved));
+    }
+  }, []);
 
   useEffect(() => {
     if (!user) {
@@ -238,12 +252,27 @@ export default function ServiciosPage() {
 
                 <div>
                   <label htmlFor="trabajador">Trabajador asociado</label>
-                  <input
+                  <select
                     id="trabajador"
                     value={form.trabajador}
                     onChange={(event) => handleChange("trabajador", event.target.value)}
                     className={styles.input}
-                  />
+                    disabled={trabajadores.length === 0}
+                  >
+                    <option value="">
+                      {trabajadores.length === 0
+                        ? "No hay trabajadores registrados"
+                        : "Selecciona un trabajador"}
+                    </option>
+                    {trabajadores.map((trabajador) => (
+                      <option
+                        key={trabajador.id}
+                        value={`${trabajador.nombre} ${trabajador.apellido}`}
+                      >
+                        {trabajador.nombre} {trabajador.apellido} - {trabajador.especialidad}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
