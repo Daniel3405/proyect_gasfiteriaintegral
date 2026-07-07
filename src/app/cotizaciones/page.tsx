@@ -6,104 +6,141 @@ import { useAuth } from "@/app/context/AuthContext";
 import { Cotizacion } from "@/types/Cotizacion";
 import { Servicio } from "@/types/Servicios";
 
-import {
-  collection,
-  addDoc,
-  getDocs,
-  updateDoc,
-  doc,
-} from "firebase/firestore";
-
-import { db } from "@/lib/firebase";
 
 export default function CotizacionesPage() {
+
 
   const { user, isLoading } = useAuth();
   const router = useRouter();
 
+
   const esAdmin = user?.role === "admin";
 
-<<<<<<< Updated upstream
 
-=======
->>>>>>> Stashed changes
+
   const [solicitudId, setSolicitudId] = useState("");
   const [materiales, setMateriales] = useState("");
   const [cantidad, setCantidad] = useState("");
   const [precioTotal, setPrecioTotal] = useState("");
   const [fechaEmision, setFechaEmision] = useState("");
 
+
   const [estado, setEstado] = useState<
     "Pendiente" | "Aprobada" | "Rechazada"
   >("Pendiente");
 
-<<<<<<< Updated upstream
+
+
   const [selectedCotizacion, setSelectedCotizacion] =
     useState<Cotizacion | null>(null);
-=======
-  const [cotizaciones, setCotizaciones] = useState<Cotizacion[]>([]);
-  const [busqueda, setBusqueda] = useState("");
-  const [editandoId, setEditandoId] = useState<string | null>(null);
->>>>>>> Stashed changes
+
 
   const [showDetails, setShowDetails] =
     useState(false);
 
+
+
   const [cotizaciones, setCotizaciones] =
     useState<Cotizacion[]>([]);
+
+
 
   const [services, setServicios] =
     useState<Servicio[]>([]);
 
+
+
   const [busqueda, setBusqueda] =
     useState("");
+
+
 
   const [editandoId, setEditandoId] =
     useState<number | null>(null);
 
-  const [initialized, setInitialized] = useState(false);
-  
+
+
+  const [initialized, setInitialized] =
+    useState(false);
+
+
+
+
   useEffect(() => {
 
     if (isLoading) return;
 
+
     if (!user) {
       router.replace("/login");
     }
-<<<<<<< Updated upstream
 
-  }, [user, router, isLoading]);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const cotizacionesGuardadas = localStorage.getItem("cotizaciones");
-    if (cotizacionesGuardadas) {
-      setCotizaciones(JSON.parse(cotizacionesGuardadas));
-    }
-
-    const serviciosGuardados = localStorage.getItem("gasfiteria-servicios");
-    if (serviciosGuardados) {
-      setServicios(JSON.parse(serviciosGuardados));
-    }
-
-    setInitialized(true);
-  }, []);
-
-  useEffect(() => {
-    if (!initialized) return;
-    localStorage.setItem("cotizaciones", JSON.stringify(cotizaciones));
-  }, [cotizaciones, initialized]);
-
+  }, [
+    user,
+    router,
+    isLoading
+  ]);
 
 
 
 
 
   useEffect(() => {
+
 
     if (typeof window === "undefined")
       return;
+
+
+
+    const datosGuardados =
+      localStorage.getItem(
+        "cotizaciones"
+      );
+
+
+    if(datosGuardados){
+
+      setCotizaciones(
+        JSON.parse(datosGuardados)
+      );
+
+    }
+
+
+
+    const datosServicios =
+      localStorage.getItem(
+        "gasfiteria-servicios"
+      );
+
+
+    if(datosServicios){
+
+      setServicios(
+        JSON.parse(datosServicios)
+      );
+
+    }
+
+
+
+    setInitialized(true);
+
+
+  }, []);
+
+
+
+
+
+  useEffect(() => {
+
+
+    if(!initialized)
+      return;
+
 
 
     localStorage.setItem(
@@ -112,57 +149,46 @@ export default function CotizacionesPage() {
     );
 
 
-  }, [cotizaciones]);
-=======
+  },[
+    cotizaciones,
+    initialized
+  ]);
 
-    cargarCotizaciones();
-  }, [user, isLoading]);
 
-  const cargarCotizaciones = async () => {
-    try {
-      const querySnapshot = await getDocs(
-        collection(db, "cotizaciones")
-      );
-
-      const datos: Cotizacion[] = querySnapshot.docs.map((documento) => ({
-        id: documento.id,
-        solicitudId: documento.data().solicitudId,
-        materiales: documento.data().materiales,
-        cantidad: documento.data().cantidad,
-        precioTotal: documento.data().precioTotal,
-        fechaEmision: documento.data().fechaEmision,
-        estado: documento.data().estado,
-      }));
-
-      setCotizaciones(datos);
-    } catch (error) {
-      console.error(error);
-      alert("Error al cargar las cotizaciones.");
-    }
-  };
->>>>>>> Stashed changes
 
 
 
 
 
   const editarCotizacion = (
-    cotizacion: Cotizacion
+    cotizacion:Cotizacion
   ) => {
 
-    setSolicitudId(cotizacion.solicitudId);
-    setMateriales(cotizacion.materiales);
+
+    setSolicitudId(
+      cotizacion.solicitudId
+    );
+
+
+    setMateriales(
+      cotizacion.materiales
+    );
+
+
     setCantidad(
       cotizacion.cantidad.toString()
     );
+
 
     setPrecioTotal(
       cotizacion.precioTotal.toString()
     );
 
+
     setFechaEmision(
       cotizacion.fechaEmision
     );
+
 
     setEstado(
       cotizacion.estado
@@ -173,19 +199,26 @@ export default function CotizacionesPage() {
       cotizacion.id
     );
 
+
   };
 
-<<<<<<< Updated upstream
+
 
 
 
 
   const verDetalles = (
-    cotizacion: Cotizacion
-  ) => {
+    cotizacion:Cotizacion
+  )=>{
 
-    setSelectedCotizacion(cotizacion);
+
+    setSelectedCotizacion(
+      cotizacion
+    );
+
+
     setShowDetails(true);
+
 
   };
 
@@ -193,49 +226,76 @@ export default function CotizacionesPage() {
 
 
 
-  const cotizacionesFiltradas = useMemo(() => {
+
+  const cotizacionesFiltradas = useMemo(()=>{
 
 
     const visibles = esAdmin
-      ? cotizaciones
-      : cotizaciones.filter(
-          (cotizacion) =>
-            services.some(
-              (servicio) =>
-                servicio.id ===
-                  cotizacion.solicitudId &&
-                servicio.clienteNombre ===
-                  user?.nombre &&
-                servicio.clienteRut ===
-                  user?.rut
-            )
-        );
+
+      ?
+
+      cotizaciones
+
+      :
+
+      cotizaciones.filter(
+        (cotizacion)=>
+
+          services.some(
+            (servicio)=>
+
+              servicio.id ===
+              cotizacion.solicitudId
+
+              &&
+
+              servicio.clienteNombre ===
+              user?.nombre
+
+              &&
+
+              servicio.clienteRut ===
+              user?.rut
+
+          )
+
+      );
+
+
 
 
 
     return visibles.filter(
-      (cotizacion) =>
+      (cotizacion)=>
+
 
         cotizacion.materiales
-          .toLowerCase()
-          .includes(
-            busqueda.toLowerCase()
-          )
+        .toLowerCase()
+        .includes(
+          busqueda.toLowerCase()
+        )
+
 
         ||
+
 
         cotizacion.estado
-          .toLowerCase()
-          .includes(
-            busqueda.toLowerCase()
-          )
+        .toLowerCase()
+        .includes(
+          busqueda.toLowerCase()
+        )
+
 
         ||
 
+
         cotizacion.solicitudId
-          .includes(busqueda)
+        .includes(busqueda)
+
+
 
     );
+
 
 
   },[
@@ -251,31 +311,30 @@ export default function CotizacionesPage() {
 
 
 
-  const guardarCotizacion = () => {
+
+  const guardarCotizacion = ()=>{
 
 
-=======
-  const cotizacionesFiltradas = cotizaciones.filter(
-    (cotizacion) =>
-      cotizacion.materiales
-        .toLowerCase()
-        .includes(busqueda.toLowerCase()) ||
-      cotizacion.estado
-        .toLowerCase()
-        .includes(busqueda.toLowerCase()) ||
-      cotizacion.solicitudId
-        .toString()
-        .includes(busqueda)
-  );
+    if(
 
-  const guardarCotizacion = async () => {
->>>>>>> Stashed changes
-    if (
-      !solicitudId.trim() ||
-      !materiales.trim() ||
-      !cantidad.trim() ||
-      !precioTotal.trim() ||
+      !solicitudId.trim()
+
+      ||
+
+      !materiales.trim()
+
+      ||
+
+      !cantidad.trim()
+
+      ||
+
+      !precioTotal.trim()
+
+      ||
+
       !fechaEmision.trim()
+
     ){
 
       alert(
@@ -283,9 +342,11 @@ export default function CotizacionesPage() {
       );
 
       return;
+
     }
 
-<<<<<<< Updated upstream
+
+
 
 
     if(editandoId !== null){
@@ -293,7 +354,6 @@ export default function CotizacionesPage() {
 
       const actualizadas =
         cotizaciones.map((c)=>
-
 
           c.id === editandoId
 
@@ -318,7 +378,10 @@ export default function CotizacionesPage() {
         );
 
 
-      setCotizaciones(actualizadas);
+
+      setCotizaciones(
+        actualizadas
+      );
 
 
       alert(
@@ -326,7 +389,8 @@ export default function CotizacionesPage() {
       );
 
 
-    } else {
+
+    }else{
 
 
       const nuevaCotizacion:Cotizacion = {
@@ -342,8 +406,9 @@ export default function CotizacionesPage() {
       };
 
 
+
       setCotizaciones(
-        (prev)=>[
+        prev=>[
           ...prev,
           nuevaCotizacion
         ]
@@ -354,52 +419,11 @@ export default function CotizacionesPage() {
         "Cotización guardada correctamente"
       );
 
-=======
-    const datos = {
-      solicitudId: Number(solicitudId),
-      materiales,
-      cantidad: Number(cantidad),
-      precioTotal: Number(precioTotal),
-      fechaEmision,
-      estado,
-    };
 
-    try {
-      if (editandoId) {
-        await updateDoc(
-          doc(db, "cotizaciones", editandoId),
-          datos
-        );
-
-        alert("Cotización actualizada correctamente.");
-      } else {
-        await addDoc(
-          collection(db, "cotizaciones"),
-          datos
-        );
-
-        alert("Cotización guardada correctamente.");
-      }
-
-      await cargarCotizaciones();
-
-      setSolicitudId("");
-      setMateriales("");
-      setCantidad("");
-      setPrecioTotal("");
-      setFechaEmision("");
-      setEstado("Pendiente");
-      setEditandoId(null);
-
-    } catch (error) {
-      console.error(error);
-      alert("Error al guardar la cotización.");
->>>>>>> Stashed changes
     }
-  };const eliminarCotizacion = async (id: string) => {
-  if (!confirm("¿Desea eliminar esta cotización?")) return;
 
-<<<<<<< Updated upstream
+
+
 
 
     setSolicitudId("");
@@ -411,14 +435,19 @@ export default function CotizacionesPage() {
     setEditandoId(null);
 
 
-  };
-    const eliminarCotizacion = (id:number)=>{
+
+  };  const eliminarCotizacion = (
+    id:number
+  )=>{
+
 
     if(
       !confirm(
         "¿Desea eliminar esta cotización?"
       )
-    ) return;
+    )
+      return;
+
 
 
     setCotizaciones(
@@ -428,7 +457,9 @@ export default function CotizacionesPage() {
         )
     );
 
+
   };
+
 
 
 
@@ -444,13 +475,13 @@ export default function CotizacionesPage() {
       }}
     >
 
-
       <div
         style={{
           maxWidth:"1200px",
           margin:"0 auto"
         }}
       >
+
 
 
         <h1
@@ -465,7 +496,9 @@ export default function CotizacionesPage() {
 
 
 
-        {esAdmin && (
+
+        {
+          esAdmin && (
 
           <div
             style={{
@@ -473,14 +506,16 @@ export default function CotizacionesPage() {
               padding:"25px",
               borderRadius:"15px",
               boxShadow:
-                "0 4px 15px rgba(0,0,0,0.1)",
+              "0 4px 15px rgba(0,0,0,0.1)",
               marginBottom:"25px"
             }}
           >
 
+
             <h2>
               Nueva Cotización
             </h2>
+
 
 
 
@@ -499,22 +534,28 @@ export default function CotizacionesPage() {
               </option>
 
 
-              {services.map((service)=>(
+              {
+                services.map(
+                  (service)=>(
 
-                <option
-                  key={service.id}
-                  value={service.id}
-                >
+                  <option
+                    key={service.id}
+                    value={service.id}
+                  >
 
-                  {service.nombre}
-                  {" "}
-                  ({service.id})
+                    {service.nombre}
+                    {" "}
+                    ({service.id})
 
-                </option>
+                  </option>
 
-              ))}
+                ))
+              }
+
 
             </select>
+
+
 
 
 
@@ -570,6 +611,7 @@ export default function CotizacionesPage() {
 
 
 
+
             <select
               value={estado}
               onChange={(e)=>
@@ -595,13 +637,15 @@ export default function CotizacionesPage() {
                 Rechazada
               </option>
 
-
             </select>
 
 
 
+
             <button
-              onClick={guardarCotizacion}
+              onClick={
+                guardarCotizacion
+              }
               style={guardarButton}
             >
 
@@ -613,12 +657,15 @@ export default function CotizacionesPage() {
                 "Guardar Cotización"
               }
 
+
             </button>
+
 
 
           </div>
 
-        )}
+          )
+        }
 
 
 
@@ -632,35 +679,29 @@ export default function CotizacionesPage() {
             padding:"25px",
             borderRadius:"15px",
             boxShadow:
-              "0 4px 15px rgba(0,0,0,0.1)"
+            "0 4px 15px rgba(0,0,0,0.1)"
           }}
         >
 
 
           <h2>
-
             Cotizaciones Registradas (
             {cotizacionesFiltradas.length}
             )
-
           </h2>
 
 
 
+
           <input
-
             value={busqueda}
-
             onChange={(e)=>
               setBusqueda(
                 e.target.value
               )
             }
-
             placeholder="🔍 Buscar..."
-
             style={inputStyle}
-
           />
 
 
@@ -676,7 +717,9 @@ export default function CotizacionesPage() {
               No existen cotizaciones registradas.
             </p>
 
+
             :
+
 
             <table
               style={{
@@ -736,110 +779,117 @@ export default function CotizacionesPage() {
               <tbody>
 
 
-              {
-                cotizacionesFiltradas.map(
-                  (cotizacion)=>(
-
-                  <tr key={cotizacion.id}>
+                {
+                  cotizacionesFiltradas.map(
+                    (cotizacion)=>(
 
 
-                    <td style={tdStyle}>
-                      {cotizacion.id}
-                    </td>
+                    <tr
+                      key={cotizacion.id}
+                    >
 
 
-                    <td style={tdStyle}>
-                      {cotizacion.solicitudId}
-                    </td>
+                      <td style={tdStyle}>
+                        {cotizacion.id}
+                      </td>
 
 
-                    <td style={tdStyle}>
-                      {cotizacion.materiales}
-                    </td>
+                      <td style={tdStyle}>
+                        {cotizacion.solicitudId}
+                      </td>
 
 
-                    <td style={tdStyle}>
-                      {cotizacion.cantidad}
-                    </td>
+                      <td style={tdStyle}>
+                        {cotizacion.materiales}
+                      </td>
 
 
-                    <td style={tdStyle}>
-                      $
-                      {
-                        cotizacion.precioTotal
-                        .toLocaleString("es-CL")
-                      }
-                    </td>
+                      <td style={tdStyle}>
+                        {cotizacion.cantidad}
+                      </td>
 
 
-                    <td style={tdStyle}>
-                      {cotizacion.fechaEmision}
-                    </td>
-
-
-                    <td style={tdStyle}>
-                      {cotizacion.estado}
-                    </td>
-
-
-
-                    <td style={tdStyle}>
-
-
-                      <button
-                        onClick={()=>
-                          verDetalles(cotizacion)
+                      <td style={tdStyle}>
+                        $
+                        {
+                          cotizacion.precioTotal
+                          .toLocaleString("es-CL")
                         }
-                        style={detalleButton}
-                      >
-                        Ver detalles
-                      </button>
+                      </td>
+
+
+                      <td style={tdStyle}>
+                        {cotizacion.fechaEmision}
+                      </td>
+
+
+                      <td style={tdStyle}>
+                        {cotizacion.estado}
+                      </td>
 
 
 
-                      {
-                        esAdmin &&
+                      <td style={tdStyle}>
 
-                        <>
 
                         <button
                           onClick={()=>
-                            editarCotizacion(
+                            verDetalles(
                               cotizacion
                             )
                           }
-                          style={editarButton}
+                          style={detalleButton}
                         >
-                          Editar
+                          Ver detalles
                         </button>
 
 
 
-                        <button
-                          onClick={()=>
-                            eliminarCotizacion(
-                              cotizacion.id
-                            )
-                          }
-                          style={eliminarButton}
-                        >
-                          Eliminar
-                        </button>
+                        {
+                          esAdmin && (
+
+                          <>
+
+                            <button
+                              onClick={()=>
+                                editarCotizacion(
+                                  cotizacion
+                                )
+                              }
+                              style={editarButton}
+                            >
+                              Editar
+                            </button>
 
 
-                        </>
 
-                      }
+                            <button
+                              onClick={()=>
+                                eliminarCotizacion(
+                                  cotizacion.id
+                                )
+                              }
+                              style={eliminarButton}
+                            >
+                              Eliminar
+                            </button>
 
 
-                    </td>
+                          </>
+
+                          )
+                        }
 
 
-                  </tr>
+                      </td>
 
-                ))
 
-              }
+                    </tr>
+
+
+                  ))
+
+                }
 
 
               </tbody>
@@ -850,23 +900,34 @@ export default function CotizacionesPage() {
           }
 
 
+
         </div>
 
 
 
 
 
-        {showDetails &&
-        selectedCotizacion && (
 
-          <div style={modalOverlayStyle}>
 
-            <div style={modalStyle}>
+        {
+          showDetails &&
+          selectedCotizacion && (
+
+
+          <div
+            style={modalOverlayStyle}
+          >
+
+
+            <div
+              style={modalStyle}
+            >
 
 
               <h2>
                 Detalle de Cotización
               </h2>
+
 
 
               <p>
@@ -885,6 +946,7 @@ export default function CotizacionesPage() {
               </p>
 
 
+
               <p>
                 <strong>
                   Precio:
@@ -898,88 +960,102 @@ export default function CotizacionesPage() {
 
 
 
+
+
               {
                 services.find(
-                  (s)=>
-                    s.id ===
+                  (service)=>
+                    service.id ===
                     selectedCotizacion.solicitudId
                 )
 
+
                 ?
+
 
                 <>
 
-                <h3>
-                  Solicitud vinculada
-                </h3>
+
+                  <h3>
+                    Solicitud vinculada
+                  </h3>
 
 
-                <p>
-                  <strong>
-                    Servicio:
-                  </strong>{" "}
-                  {
-                    services.find(
-                      (s)=>
-                      s.id ===
-                      selectedCotizacion.solicitudId
-                    )?.nombre
-                  }
-                </p>
+
+                  <p>
+                    <strong>
+                      Servicio:
+                    </strong>{" "}
+                    {
+                      services.find(
+                        (service)=>
+                          service.id ===
+                          selectedCotizacion.solicitudId
+                      )?.nombre
+                    }
+                  </p>
 
 
-                <p>
-                  <strong>
-                    Cliente:
-                  </strong>{" "}
-                  {
-                    services.find(
-                      (s)=>
-                      s.id ===
-                      selectedCotizacion.solicitudId
-                    )?.clienteNombre
-                  }
-                </p>
+
+                  <p>
+                    <strong>
+                      Cliente:
+                    </strong>{" "}
+                    {
+                      services.find(
+                        (service)=>
+                          service.id ===
+                          selectedCotizacion.solicitudId
+                      )?.clienteNombre
+                    }
+                  </p>
 
 
-                <p>
-                  <strong>
-                    Trabajador:
-                  </strong>{" "}
-                  {
-                    services.find(
-                      (s)=>
-                      s.id ===
-                      selectedCotizacion.solicitudId
-                    )?.trabajador ||
-                    "Sin asignar"
-                  }
-                </p>
+
+                  <p>
+                    <strong>
+                      Trabajador:
+                    </strong>{" "}
+                    {
+                      services.find(
+                        (service)=>
+                          service.id ===
+                          selectedCotizacion.solicitudId
+                      )?.trabajador
+                      ||
+                      "Sin asignar"
+                    }
+                  </p>
 
 
-                <p>
-                  <strong>
-                    Estado:
-                  </strong>{" "}
-                  {
-                    services.find(
-                      (s)=>
-                      s.id ===
-                      selectedCotizacion.solicitudId
-                    )?.estado
-                  }
-                </p>
+
+                  <p>
+                    <strong>
+                      Estado:
+                    </strong>{" "}
+                    {
+                      services.find(
+                        (service)=>
+                          service.id ===
+                          selectedCotizacion.solicitudId
+                      )?.estado
+                    }
+                  </p>
 
 
                 </>
 
+
                 :
+
 
                 <p>
                   No se encontró la solicitud vinculada.
                 </p>
 
+
               }
+
 
 
 
@@ -990,352 +1066,128 @@ export default function CotizacionesPage() {
                 }
                 style={cerrarButton}
               >
+
                 Cerrar
+
               </button>
 
 
 
             </div>
 
+
           </div>
 
-        )}
+
+          )
+
+        }
 
 
 
       </div>
+
 
     </div>
 
   );
 
+
 }
+
+
+
+
+
 const inputStyle: CSSProperties = {
-=======
-  try {
-    await deleteDoc(doc(db, "cotizaciones", id));
-
-    alert("Cotización eliminada correctamente.");
-
-    cargarCotizaciones();
-  } catch (error) {
-    console.error(error);
-    alert("Error al eliminar la cotización.");
-  }
-};
-
-return (
-  <div
-    style={{
-      backgroundColor: "#f4f6f9",
-      minHeight: "100vh",
-      padding: "30px",
-    }}
-  >
-    <div
-      style={{
-        maxWidth: "1200px",
-        margin: "0 auto",
-      }}
-    >
-      <h1
-        style={{
-          color: "#0f4c81",
-          marginBottom: "20px",
-        }}
-      >
-        💰 Gestión de Cotizaciones
-      </h1>
-
-      {esAdmin && (
-        <div
-          style={{
-            background: "white",
-            padding: "25px",
-            borderRadius: "15px",
-            boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
-            marginBottom: "25px",
-          }}
-        >
-          <h2>Nueva Cotización</h2>
-
-          <input
-            value={solicitudId}
-            onChange={(e) => setSolicitudId(e.target.value)}
-            placeholder="ID Solicitud"
-            style={inputStyle}
-          />
-
-          <input
-            value={materiales}
-            onChange={(e) => setMateriales(e.target.value)}
-            placeholder="Materiales"
-            style={inputStyle}
-          />
-
-          <input
-            value={cantidad}
-            onChange={(e) => setCantidad(e.target.value)}
-            placeholder="Cantidad"
-            style={inputStyle}
-          />
-
-          <input
-            value={precioTotal}
-            onChange={(e) => setPrecioTotal(e.target.value)}
-            placeholder="Precio Total"
-            style={inputStyle}
-          />
-
-          <input
-            type="date"
-            value={fechaEmision}
-            onChange={(e) => setFechaEmision(e.target.value)}
-            style={inputStyle}
-          />
-
-          <select
-            value={estado}
-            onChange={(e) =>
-              setEstado(
-                e.target.value as
-                  | "Pendiente"
-                  | "Aprobada"
-                  | "Rechazada"
-              )
-            }
-            style={inputStyle}
-          >
-            <option value="Pendiente">Pendiente</option>
-            <option value="Aprobada">Aprobada</option>
-            <option value="Rechazada">Rechazada</option>
-          </select>
-
-          <button
-            onClick={guardarCotizacion}
-            style={guardarButton}
-          >
-            {editandoId
-              ? "Actualizar Cotización"
-              : "Guardar Cotización"}
-          </button>
-        </div>
-      )}
-
-      <div
-        style={{
-          background: "white",
-          padding: "25px",
-          borderRadius: "15px",
-          boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
-        }}
-      >
-        <h2>
-          Cotizaciones Registradas ({cotizaciones.length})
-        </h2>
-
-        <input
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-          placeholder="🔍 Buscar..."
-          style={{
-            width: "100%",
-            padding: "12px",
-            marginBottom: "20px",
-            borderRadius: "8px",
-            border: "1px solid #ccc",
-          }}
-        />
-
-        {cotizacionesFiltradas.length === 0 ? (
-          <p>No existen cotizaciones registradas.</p>
-        ) : (
-          <table
-            style={{
-              width: "100%",
-              borderCollapse: "collapse",
-            }}
-          >
-            <thead>
-              <tr
-                style={{
-                  backgroundColor: "#0f4c81",
-                  color: "white",
-                }}
-              >
-                <th style={thStyle}>ID</th>
-                <th style={thStyle}>Solicitud</th>
-                <th style={thStyle}>Materiales</th>
-                <th style={thStyle}>Cantidad</th>
-                <th style={thStyle}>Precio</th>
-                <th style={thStyle}>Fecha</th>
-                <th style={thStyle}>Estado</th>
-                <th style={thStyle}>Acción</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {cotizacionesFiltradas.map((cotizacion) => (
-                <tr key={cotizacion.id}>
-                  <td style={tdStyle}>{cotizacion.id}</td>
-
-                  <td style={tdStyle}>
-                    {cotizacion.solicitudId}
-                  </td>
-
-                  <td style={tdStyle}>
-                    {cotizacion.materiales}
-                  </td>
-
-                  <td style={tdStyle}>
-                    {cotizacion.cantidad}
-                  </td>
-
-                  <td style={tdStyle}>
-                    $
-                    {cotizacion.precioTotal.toLocaleString(
-                      "es-CL"
-                    )}
-                  </td>
-
-                  <td style={tdStyle}>
-                    {cotizacion.fechaEmision}
-                  </td>
-
-                  <td style={tdStyle}>
-                    {cotizacion.estado}
-                  </td>
-
-                  <td style={tdStyle}>
-                    {esAdmin && (
-                      <>
-                        <button
-                          onClick={() =>
-                            editarCotizacion(cotizacion)
-                          }
-                          style={editarButton}
-                        >
-                          Editar
-                        </button>
-
-                        <button
-                          onClick={() =>
-                            eliminarCotizacion(
-                              cotizacion.id
-                            )
-                          }
-                          style={eliminarButton}
-                        >
-                          Eliminar
-                        </button>
-                      </>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-    </div>
-  </div>
-);
-}
-
-const inputStyle = {
->>>>>>> Stashed changes
-  width: "100%",
-  padding: "12px",
-  marginBottom: "10px",
-  borderRadius: "8px",
-  border: "1px solid #ccc",
+  width:"100%",
+  padding:"12px",
+  marginBottom:"10px",
+  borderRadius:"8px",
+  border:"1px solid #ccc",
 };
 
 
 const guardarButton: CSSProperties = {
-  backgroundColor: "#0f4c81",
-  color: "white",
-  border: "none",
-  padding: "12px 20px",
-  borderRadius: "8px",
-  cursor: "pointer",
+  backgroundColor:"#0f4c81",
+  color:"white",
+  border:"none",
+  padding:"12px 20px",
+  borderRadius:"8px",
+  cursor:"pointer",
 };
 
 
 const editarButton: CSSProperties = {
-  backgroundColor: "#ffc107",
-  color: "black",
-  border: "none",
-  padding: "8px 12px",
-  borderRadius: "6px",
-  cursor: "pointer",
-  marginRight: "5px",
+  backgroundColor:"#ffc107",
+  color:"black",
+  border:"none",
+  padding:"8px 12px",
+  borderRadius:"6px",
+  cursor:"pointer",
 };
 
 
 const eliminarButton: CSSProperties = {
-  backgroundColor: "#dc3545",
-  color: "white",
-  border: "none",
-  padding: "8px 12px",
-  borderRadius: "6px",
-  cursor: "pointer",
+  backgroundColor:"#dc3545",
+  color:"white",
+  border:"none",
+  padding:"8px 12px",
+  borderRadius:"6px",
+  cursor:"pointer",
 };
 
 
 const detalleButton: CSSProperties = {
-  backgroundColor: "#0f4c81",
-  color: "white",
-  border: "none",
-  padding: "8px 12px",
-  borderRadius: "6px",
-  cursor: "pointer",
-  marginRight: "5px",
+  backgroundColor:"#0f4c81",
+  color:"white",
+  border:"none",
+  padding:"8px 12px",
+  borderRadius:"6px",
+  cursor:"pointer",
 };
 
 
 const cerrarButton: CSSProperties = {
-  backgroundColor: "#6c757d",
-  color: "white",
-  border: "none",
-  padding: "10px 15px",
-  borderRadius: "8px",
-  cursor: "pointer",
-  marginTop: "20px",
+  backgroundColor:"#6c757d",
+  color:"white",
+  border:"none",
+  padding:"10px 15px",
+  borderRadius:"8px",
+  cursor:"pointer",
+  marginTop:"20px",
 };
 
 
 const modalOverlayStyle: CSSProperties = {
-  position: "fixed",
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  backgroundColor: "rgba(0,0,0,0.5)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  zIndex: 1000,
+  position:"fixed",
+  top:0,
+  left:0,
+  right:0,
+  bottom:0,
+  backgroundColor:"rgba(0,0,0,0.5)",
+  display:"flex",
+  alignItems:"center",
+  justifyContent:"center",
+  zIndex:1000,
 };
 
 
 const modalStyle: CSSProperties = {
-  backgroundColor: "white",
-  padding: "25px",
-  borderRadius: "15px",
-  width: "90%",
-  maxWidth: "600px",
-  boxShadow:
-    "0 10px 30px rgba(0,0,0,0.2)",
+  backgroundColor:"white",
+  padding:"25px",
+  borderRadius:"15px",
+  width:"90%",
+  maxWidth:"600px",
 };
 
 
 const thStyle: CSSProperties = {
-  padding: "12px",
+  padding:"12px",
 };
 
 
 const tdStyle: CSSProperties = {
-  padding: "12px",
-  borderBottom: "1px solid #ddd",
+  padding:"12px",
+  borderBottom:"1px solid #ddd",
 };
