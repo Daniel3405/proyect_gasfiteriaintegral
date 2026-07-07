@@ -6,6 +6,16 @@ import { useAuth } from "@/app/context/AuthContext";
 import { Cotizacion } from "@/types/Cotizacion";
 import { Servicio } from "@/types/Servicios";
 
+import {
+  collection,
+  addDoc,
+  getDocs,
+  updateDoc,
+  doc,
+} from "firebase/firestore";
+
+import { db } from "@/lib/firebase";
+
 export default function CotizacionesPage() {
 
   const { user, isLoading } = useAuth();
@@ -13,7 +23,10 @@ export default function CotizacionesPage() {
 
   const esAdmin = user?.role === "admin";
 
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
   const [solicitudId, setSolicitudId] = useState("");
   const [materiales, setMateriales] = useState("");
   const [cantidad, setCantidad] = useState("");
@@ -24,8 +37,14 @@ export default function CotizacionesPage() {
     "Pendiente" | "Aprobada" | "Rechazada"
   >("Pendiente");
 
+<<<<<<< Updated upstream
   const [selectedCotizacion, setSelectedCotizacion] =
     useState<Cotizacion | null>(null);
+=======
+  const [cotizaciones, setCotizaciones] = useState<Cotizacion[]>([]);
+  const [busqueda, setBusqueda] = useState("");
+  const [editandoId, setEditandoId] = useState<string | null>(null);
+>>>>>>> Stashed changes
 
   const [showDetails, setShowDetails] =
     useState(false);
@@ -51,6 +70,7 @@ export default function CotizacionesPage() {
     if (!user) {
       router.replace("/login");
     }
+<<<<<<< Updated upstream
 
   }, [user, router, isLoading]);
 
@@ -93,6 +113,34 @@ export default function CotizacionesPage() {
 
 
   }, [cotizaciones]);
+=======
+
+    cargarCotizaciones();
+  }, [user, isLoading]);
+
+  const cargarCotizaciones = async () => {
+    try {
+      const querySnapshot = await getDocs(
+        collection(db, "cotizaciones")
+      );
+
+      const datos: Cotizacion[] = querySnapshot.docs.map((documento) => ({
+        id: documento.id,
+        solicitudId: documento.data().solicitudId,
+        materiales: documento.data().materiales,
+        cantidad: documento.data().cantidad,
+        precioTotal: documento.data().precioTotal,
+        fechaEmision: documento.data().fechaEmision,
+        estado: documento.data().estado,
+      }));
+
+      setCotizaciones(datos);
+    } catch (error) {
+      console.error(error);
+      alert("Error al cargar las cotizaciones.");
+    }
+  };
+>>>>>>> Stashed changes
 
 
 
@@ -127,6 +175,7 @@ export default function CotizacionesPage() {
 
   };
 
+<<<<<<< Updated upstream
 
 
 
@@ -205,6 +254,22 @@ export default function CotizacionesPage() {
   const guardarCotizacion = () => {
 
 
+=======
+  const cotizacionesFiltradas = cotizaciones.filter(
+    (cotizacion) =>
+      cotizacion.materiales
+        .toLowerCase()
+        .includes(busqueda.toLowerCase()) ||
+      cotizacion.estado
+        .toLowerCase()
+        .includes(busqueda.toLowerCase()) ||
+      cotizacion.solicitudId
+        .toString()
+        .includes(busqueda)
+  );
+
+  const guardarCotizacion = async () => {
+>>>>>>> Stashed changes
     if (
       !solicitudId.trim() ||
       !materiales.trim() ||
@@ -220,6 +285,7 @@ export default function CotizacionesPage() {
       return;
     }
 
+<<<<<<< Updated upstream
 
 
     if(editandoId !== null){
@@ -288,8 +354,52 @@ export default function CotizacionesPage() {
         "Cotización guardada correctamente"
       );
 
-    }
+=======
+    const datos = {
+      solicitudId: Number(solicitudId),
+      materiales,
+      cantidad: Number(cantidad),
+      precioTotal: Number(precioTotal),
+      fechaEmision,
+      estado,
+    };
 
+    try {
+      if (editandoId) {
+        await updateDoc(
+          doc(db, "cotizaciones", editandoId),
+          datos
+        );
+
+        alert("Cotización actualizada correctamente.");
+      } else {
+        await addDoc(
+          collection(db, "cotizaciones"),
+          datos
+        );
+
+        alert("Cotización guardada correctamente.");
+      }
+
+      await cargarCotizaciones();
+
+      setSolicitudId("");
+      setMateriales("");
+      setCantidad("");
+      setPrecioTotal("");
+      setFechaEmision("");
+      setEstado("Pendiente");
+      setEditandoId(null);
+
+    } catch (error) {
+      console.error(error);
+      alert("Error al guardar la cotización.");
+>>>>>>> Stashed changes
+    }
+  };const eliminarCotizacion = async (id: string) => {
+  if (!confirm("¿Desea eliminar esta cotización?")) return;
+
+<<<<<<< Updated upstream
 
 
     setSolicitudId("");
@@ -901,6 +1011,239 @@ export default function CotizacionesPage() {
 
 }
 const inputStyle: CSSProperties = {
+=======
+  try {
+    await deleteDoc(doc(db, "cotizaciones", id));
+
+    alert("Cotización eliminada correctamente.");
+
+    cargarCotizaciones();
+  } catch (error) {
+    console.error(error);
+    alert("Error al eliminar la cotización.");
+  }
+};
+
+return (
+  <div
+    style={{
+      backgroundColor: "#f4f6f9",
+      minHeight: "100vh",
+      padding: "30px",
+    }}
+  >
+    <div
+      style={{
+        maxWidth: "1200px",
+        margin: "0 auto",
+      }}
+    >
+      <h1
+        style={{
+          color: "#0f4c81",
+          marginBottom: "20px",
+        }}
+      >
+        💰 Gestión de Cotizaciones
+      </h1>
+
+      {esAdmin && (
+        <div
+          style={{
+            background: "white",
+            padding: "25px",
+            borderRadius: "15px",
+            boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
+            marginBottom: "25px",
+          }}
+        >
+          <h2>Nueva Cotización</h2>
+
+          <input
+            value={solicitudId}
+            onChange={(e) => setSolicitudId(e.target.value)}
+            placeholder="ID Solicitud"
+            style={inputStyle}
+          />
+
+          <input
+            value={materiales}
+            onChange={(e) => setMateriales(e.target.value)}
+            placeholder="Materiales"
+            style={inputStyle}
+          />
+
+          <input
+            value={cantidad}
+            onChange={(e) => setCantidad(e.target.value)}
+            placeholder="Cantidad"
+            style={inputStyle}
+          />
+
+          <input
+            value={precioTotal}
+            onChange={(e) => setPrecioTotal(e.target.value)}
+            placeholder="Precio Total"
+            style={inputStyle}
+          />
+
+          <input
+            type="date"
+            value={fechaEmision}
+            onChange={(e) => setFechaEmision(e.target.value)}
+            style={inputStyle}
+          />
+
+          <select
+            value={estado}
+            onChange={(e) =>
+              setEstado(
+                e.target.value as
+                  | "Pendiente"
+                  | "Aprobada"
+                  | "Rechazada"
+              )
+            }
+            style={inputStyle}
+          >
+            <option value="Pendiente">Pendiente</option>
+            <option value="Aprobada">Aprobada</option>
+            <option value="Rechazada">Rechazada</option>
+          </select>
+
+          <button
+            onClick={guardarCotizacion}
+            style={guardarButton}
+          >
+            {editandoId
+              ? "Actualizar Cotización"
+              : "Guardar Cotización"}
+          </button>
+        </div>
+      )}
+
+      <div
+        style={{
+          background: "white",
+          padding: "25px",
+          borderRadius: "15px",
+          boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
+        }}
+      >
+        <h2>
+          Cotizaciones Registradas ({cotizaciones.length})
+        </h2>
+
+        <input
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          placeholder="🔍 Buscar..."
+          style={{
+            width: "100%",
+            padding: "12px",
+            marginBottom: "20px",
+            borderRadius: "8px",
+            border: "1px solid #ccc",
+          }}
+        />
+
+        {cotizacionesFiltradas.length === 0 ? (
+          <p>No existen cotizaciones registradas.</p>
+        ) : (
+          <table
+            style={{
+              width: "100%",
+              borderCollapse: "collapse",
+            }}
+          >
+            <thead>
+              <tr
+                style={{
+                  backgroundColor: "#0f4c81",
+                  color: "white",
+                }}
+              >
+                <th style={thStyle}>ID</th>
+                <th style={thStyle}>Solicitud</th>
+                <th style={thStyle}>Materiales</th>
+                <th style={thStyle}>Cantidad</th>
+                <th style={thStyle}>Precio</th>
+                <th style={thStyle}>Fecha</th>
+                <th style={thStyle}>Estado</th>
+                <th style={thStyle}>Acción</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {cotizacionesFiltradas.map((cotizacion) => (
+                <tr key={cotizacion.id}>
+                  <td style={tdStyle}>{cotizacion.id}</td>
+
+                  <td style={tdStyle}>
+                    {cotizacion.solicitudId}
+                  </td>
+
+                  <td style={tdStyle}>
+                    {cotizacion.materiales}
+                  </td>
+
+                  <td style={tdStyle}>
+                    {cotizacion.cantidad}
+                  </td>
+
+                  <td style={tdStyle}>
+                    $
+                    {cotizacion.precioTotal.toLocaleString(
+                      "es-CL"
+                    )}
+                  </td>
+
+                  <td style={tdStyle}>
+                    {cotizacion.fechaEmision}
+                  </td>
+
+                  <td style={tdStyle}>
+                    {cotizacion.estado}
+                  </td>
+
+                  <td style={tdStyle}>
+                    {esAdmin && (
+                      <>
+                        <button
+                          onClick={() =>
+                            editarCotizacion(cotizacion)
+                          }
+                          style={editarButton}
+                        >
+                          Editar
+                        </button>
+
+                        <button
+                          onClick={() =>
+                            eliminarCotizacion(
+                              cotizacion.id
+                            )
+                          }
+                          style={eliminarButton}
+                        >
+                          Eliminar
+                        </button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  </div>
+);
+}
+
+const inputStyle = {
+>>>>>>> Stashed changes
   width: "100%",
   padding: "12px",
   marginBottom: "10px",
