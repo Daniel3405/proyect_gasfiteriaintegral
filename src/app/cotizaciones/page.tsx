@@ -24,13 +24,11 @@ export default function CotizacionesPage() {
     "Pendiente" | "Aprobada" | "Rechazada"
   >("Pendiente");
 
-
   const [selectedCotizacion, setSelectedCotizacion] =
     useState<Cotizacion | null>(null);
 
   const [showDetails, setShowDetails] =
     useState(false);
-
 
   const [cotizaciones, setCotizaciones] =
     useState<Cotizacion[]>([]);
@@ -38,15 +36,14 @@ export default function CotizacionesPage() {
   const [services, setServicios] =
     useState<Servicio[]>([]);
 
-
   const [busqueda, setBusqueda] =
     useState("");
 
   const [editandoId, setEditandoId] =
     useState<number | null>(null);
 
-
-
+  const [initialized, setInitialized] = useState(false);
+  
   useEffect(() => {
 
     if (isLoading) return;
@@ -57,42 +54,27 @@ export default function CotizacionesPage() {
 
   }, [user, router, isLoading]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
 
+    const cotizacionesGuardadas = localStorage.getItem("cotizaciones");
+    if (cotizacionesGuardadas) {
+      setCotizaciones(JSON.parse(cotizacionesGuardadas));
+    }
 
+    const serviciosGuardados = localStorage.getItem("gasfiteria-servicios");
+    if (serviciosGuardados) {
+      setServicios(JSON.parse(serviciosGuardados));
+    }
 
+    setInitialized(true);
+  }, []);
 
   useEffect(() => {
+    if (!initialized) return;
+    localStorage.setItem("cotizaciones", JSON.stringify(cotizaciones));
+  }, [cotizaciones, initialized]);
 
-    if (typeof window === "undefined")
-      return;
-
-
-    const cotizacionesGuardadas =
-      localStorage.getItem("cotizaciones");
-
-
-    if (cotizacionesGuardadas) {
-      setCotizaciones(
-        JSON.parse(cotizacionesGuardadas)
-      );
-    }
-
-
-
-    const serviciosGuardados =
-      localStorage.getItem(
-        "gasfiteria-servicios"
-      );
-
-
-    if (serviciosGuardados) {
-      setServicios(
-        JSON.parse(serviciosGuardados)
-      );
-    }
-
-
-  }, []);
 
 
 
