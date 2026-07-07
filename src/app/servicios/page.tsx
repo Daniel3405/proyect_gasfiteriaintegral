@@ -896,18 +896,56 @@ export default function ServiciosPage() {
                   form.precio
                 }
 
-                onChange={(e)=>
-                  handleChange(
-                    "precio",
-                    Number(
-                      e.target.value
-                    )
-                  )
-                }
+                onChange={(e) => handleChange("precio", Number(e.target.value))}
 
                 className={styles.input}
 
               />
+
+              {esAdmin && (
+                <>
+                  <label>
+                    Duración
+                  </label>
+
+                  <input
+                    value={form.duracion}
+                    onChange={(e) =>
+                      handleChange("duracion", e.target.value)
+                    }
+                    className={styles.input}
+                  />
+
+                  <label>
+                    Garantía
+                  </label>
+
+                  <input
+                    value={form.garantia}
+                    onChange={(e) =>
+                      handleChange("garantia", e.target.value)
+                    }
+                    className={styles.input}
+                  />
+
+                  <label>
+                    Estado
+                  </label>
+
+                  <select
+                    value={form.estado}
+                    onChange={(e) => handleChange("estado", e.target.value)}
+                    className={styles.input}
+                  >
+                    <option value="Solicitud">Solicitud</option>
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="En progreso">En progreso</option>
+                    <option value="Completado">Completado</option>
+                    <option value="Cancelado">Cancelado</option>
+                  </select>
+
+                </>
+              )}
 
 
 
