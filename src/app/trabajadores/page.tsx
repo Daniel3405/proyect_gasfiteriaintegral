@@ -4,8 +4,19 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
 
+import {
+  collection,
+  addDoc,
+  getDocs,
+  updateDoc,
+  deleteDoc,
+  doc,
+} from "firebase/firestore";
+
+import { db } from "@/lib/firebase";
+
 interface Trabajador {
-  id: number;
+  id: string;
   nombre: string;
   apellido: string;
   especialidad: string;
@@ -14,11 +25,10 @@ interface Trabajador {
   estado: string;
 }
 
-
-
 export default function TrabajadoresPage() {
-  const { user, isLoading } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
+
   const esAdmin = user?.role === "admin";
 
   const [nombre, setNombre] = useState("");
@@ -27,42 +37,51 @@ export default function TrabajadoresPage() {
   const [telefono, setTelefono] = useState("");
   const [correo, setCorreo] = useState("");
 
-  const [trabajadores, setTrabajadores] = useState<Trabajador[]>(() => {
-    const datosGuardados = localStorage.getItem("trabajadores");
-    return datosGuardados ? JSON.parse(datosGuardados) : [];
-  });
+  const [trabajadores, setTrabajadores] = useState<Trabajador[]>([]);
   const [busqueda, setBusqueda] = useState("");
-  const [editandoId, setEditandoId] = useState<number | null>(null);
+  const [editandoId, setEditandoId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isLoading) return;
-    
     if (!user) {
       router.replace("/login");
       return;
     }
-  }, [user, router, isLoading]);
+  }, [user, router]);
 
   useEffect(() => {
-    localStorage.setItem(
-      "trabajadores",
-      JSON.stringify(trabajadores)
-    );
-  }, [trabajadores]);
+    cargarTrabajadores();
+  }, []);
+
+  const cargarTrabajadores = async () => {
+    try {
+      const snapshot = await getDocs(collection(db, "trabajadores"));
+
+      const lista: Trabajador[] = snapshot.docs.map((documento) => ({
+        id: documento.id,
+        ...(documento.data() as Omit<Trabajador, "id">),
+      }));
+
+      setTrabajadores(lista);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const editarTrabajador = (trabajador: Trabajador) => {
-  setNombre(trabajador.nombre);
-  setApellido(trabajador.apellido);
-  setEspecialidad(trabajador.especialidad);
-  setTelefono(trabajador.telefono);
-  setCorreo(trabajador.correo);
+    setNombre(trabajador.nombre);
+    setApellido(trabajador.apellido);
+    setEspecialidad(trabajador.especialidad);
+    setTelefono(trabajador.telefono);
+    setCorreo(trabajador.correo);
 
-  setEditandoId(trabajador.id);
-};
+    setEditandoId(trabajador.id);
+  };
 
   const trabajadoresVisibles = esAdmin
     ? trabajadores
-    : trabajadores.filter((trabajador) => trabajador.estado === "Disponible");
+    : trabajadores.filter(
+        (trabajador) => trabajador.estado === "Disponible"
+      );
 
   const trabajadoresFiltrados = trabajadoresVisibles.filter(
     (trabajador) =>
@@ -77,39 +96,19 @@ export default function TrabajadoresPage() {
         .includes(busqueda.toLowerCase())
   );
 
- const guardarTrabajador = () => {
-  if (
-    !nombre.trim() ||
-    !apellido.trim() ||
-    !especialidad.trim() ||
-    !telefono.trim() ||
-    !correo.trim()
-  ) {
-    alert("Complete todos los campos");
-    return;
-  }
+  const guardarTrabajador = async () => {
+    if (
+      !nombre.trim() ||
+      !apellido.trim() ||
+      !especialidad.trim() ||
+      !telefono.trim() ||
+      !correo.trim()
+    ) {
+      alert("Complete todos los campos");
+      return;
+    }
 
-  if (editandoId !== null) {
-    const actualizados = trabajadores.map((t) =>
-      t.id === editandoId
-        ? {
-            ...t,
-            nombre,
-            apellido,
-            especialidad,
-            telefono,
-            correo,
-          }
-        : t
-    );
-
-    setTrabajadores(actualizados);
-    setEditandoId(null);
-
-    alert("Trabajador actualizado");
-  } else {
-    const nuevoTrabajador: Trabajador = {
-      id: Date.now(),
+    const datos = {
       nombre,
       apellido,
       especialidad,
@@ -118,224 +117,262 @@ export default function TrabajadoresPage() {
       estado: "Disponible",
     };
 
-    setTrabajadores((prev) => [...prev, nuevoTrabajador]);
+    try {
+      if (editandoId) {
+        await updateDoc(
+          doc(db, "trabajadores", editandoId),
+          datos
+        );
 
-    alert("Trabajador guardado correctamente");
-  }
+        alert("Trabajador actualizado");
+      } else {
+        await addDoc(
+          collection(db, "trabajadores"),
+          datos
+        );
 
-  setNombre("");
-  setApellido("");
-  setEspecialidad("");
-  setTelefono("");
-  setCorreo("");
-};
-    
-  const eliminarTrabajador = (id: number) => {
-    if (!confirm("¿Desea eliminar este trabajador?")) {
-      return;
+        alert("Trabajador guardado correctamente");
+      }
+
+      await cargarTrabajadores();
+
+      setEditandoId(null);
+      setNombre("");
+      setApellido("");
+      setEspecialidad("");
+      setTelefono("");
+      setCorreo("");
+
+    } catch (error) {
+      console.error(error);
+      alert("Error al guardar trabajador");
     }
-
-    setTrabajadores((prev) =>
-      prev.filter((trabajador) => trabajador.id !== id)
-    );
   };
 
+  const eliminarTrabajador = async (id: string) => {
+    if (!confirm("¿Desea eliminar este trabajador?")) return;
+
+    try {
+      await deleteDoc(doc(db, "trabajadores", id));
+
+      alert("Trabajador eliminado correctamente");
+
+      await cargarTrabajadores();
+
+      if (editandoId === id) {
+        setEditandoId(null);
+        setNombre("");
+        setApellido("");
+        setEspecialidad("");
+        setTelefono("");
+        setCorreo("");
+      }
+
+    } catch (error) {
+      console.error(error);
+      alert("Error al eliminar trabajador");
+    }
+  };
   return (
+  <div
+    style={{
+      backgroundColor: "#f4f6f9",
+      minHeight: "100vh",
+      padding: "30px",
+    }}
+  >
     <div
       style={{
-        backgroundColor: "#f4f6f9",
-        minHeight: "100vh",
-        padding: "30px",
+        maxWidth: "1200px",
+        margin: "0 auto",
       }}
     >
-      <div
+      <h1
         style={{
-          maxWidth: "1200px",
-          margin: "0 auto",
+          color: "#0f4c81",
+          marginBottom: "20px",
         }}
       >
-        <h1
-          style={{
-            color: "#0f4c81",
-            marginBottom: "20px",
-          }}
-        >
-          👷 Gestión de Trabajadores
-        </h1>
+        👷 Gestión de Trabajadores
+      </h1>
 
-        {esAdmin && (
-          <div
-            style={{
-              background: "white",
-              padding: "25px",
-              borderRadius: "15px",
-              boxShadow: "0 4px 15px rgba(0, 0, 0, 0.1)",
-              marginBottom: "25px",
-            }}
-          >
-            <h2>Nuevo Trabajador</h2>
-
-            <input
-              type="text"
-              placeholder="Nombre"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              style={inputStyle}
-            />
-
-            <input
-              type="text"
-              placeholder="Apellido"
-              value={apellido}
-              onChange={(e) => setApellido(e.target.value)}
-              style={inputStyle}
-            />
-
-            <input
-              type="text"
-              placeholder="Especialidad"
-              value={especialidad}
-              onChange={(e) => setEspecialidad(e.target.value)}
-              style={inputStyle}
-            />
-
-            <input
-              type="text"
-              placeholder="Teléfono"
-              value={telefono}
-              onChange={(e) => setTelefono(e.target.value)}
-              style={inputStyle}
-            />
-
-            <input
-              type="email"
-              placeholder="Correo"
-              value={correo}
-              onChange={(e) => setCorreo(e.target.value)}
-              style={inputStyle}
-            />
-
-            <button
-              onClick={guardarTrabajador}
-              style={guardarButton}
-            >
-              Guardar Trabajador
-            </button>
-          </div>
-        )}
-
+      {esAdmin && (
         <div
           style={{
             background: "white",
             padding: "25px",
             borderRadius: "15px",
-            boxShadow: "0 4px 15px rgba(0, 0, 0, 0.1)",
+            boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
+            marginBottom: "25px",
           }}
         >
           <h2>
-            Trabajadores Registrados ({trabajadores.length})
+            {editandoId
+              ? "Editar Trabajador"
+              : "Nuevo Trabajador"}
           </h2>
 
           <input
             type="text"
-            placeholder="🔍 Buscar trabajador..."
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "12px",
-              marginBottom: "20px",
-              borderRadius: "8px",
-              border: "1px solid #ccc",
-            }}
+            placeholder="Nombre"
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            style={inputStyle}
           />
 
-          {trabajadoresFiltrados.length === 0 ? (
-            <p>No existen trabajadores registrados.</p>
-          ) : (
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                marginTop: "15px",
-              }}
-            >
-              <thead>
-                <tr
-                  style={{
-                    backgroundColor: "#0f4c81",
-                    color: "white",
-                  }}
-                >
-                  <th style={thStyle}>Nombre</th>
-                  <th style={thStyle}>Especialidad</th>
-                  <th style={thStyle}>Teléfono</th>
-                  <th style={thStyle}>Correo</th>
-                  <th style={thStyle}>Estado</th>
-                  <th style={thStyle}>Acción</th>
-                </tr>
-              </thead>
+          <input
+            type="text"
+            placeholder="Apellido"
+            value={apellido}
+            onChange={(e) => setApellido(e.target.value)}
+            style={inputStyle}
+          />
 
-              <tbody>
-                {trabajadoresFiltrados.map((trabajador) => (
-                  <tr key={trabajador.id}>
-                    <td style={tdStyle}>
-                      {trabajador.nombre} {trabajador.apellido}
-                    </td>
+          <input
+            type="text"
+            placeholder="Especialidad"
+            value={especialidad}
+            onChange={(e) => setEspecialidad(e.target.value)}
+            style={inputStyle}
+          />
 
-                    <td style={tdStyle}>
-                      {trabajador.especialidad}
-                    </td>
+          <input
+            type="text"
+            placeholder="Teléfono"
+            value={telefono}
+            onChange={(e) => setTelefono(e.target.value)}
+            style={inputStyle}
+          />
 
-                    <td style={tdStyle}>
-                      {trabajador.telefono}
-                    </td>
+          <input
+            type="email"
+            placeholder="Correo"
+            value={correo}
+            onChange={(e) => setCorreo(e.target.value)}
+            style={inputStyle}
+          />
 
-                    <td style={tdStyle}>
-                      {trabajador.correo}
-                    </td>
-
-                    <td style={tdStyle}>
-                      {trabajador.estado}
-                    </td>
-
-                    <td style={tdStyle}>
-                      {esAdmin && (
-                        <>
-                          <button
-                            onClick={() =>
-                              eliminarTrabajador(trabajador.id)
-                            }
-                            style={eliminarButton}
-                          >
-                            Eliminar
-                          </button>
-                          <button
-                            onClick={() => editarTrabajador(trabajador)}
-                            style={{
-                              backgroundColor: "#ffc107",
-                              color: "black",
-                              border: "none",
-                              padding: "8px 12px",
-                              borderRadius: "6px",
-                              cursor: "pointer",
-                              marginRight: "5px",
-                            }}
-                          >
-                            Editar
-                          </button>
-                        </>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+          <button
+            onClick={guardarTrabajador}
+            style={guardarButton}
+          >
+            {editandoId
+              ? "Actualizar Trabajador"
+              : "Guardar Trabajador"}
+          </button>
         </div>
+      )}
+
+      <div
+        style={{
+          background: "white",
+          padding: "25px",
+          borderRadius: "15px",
+          boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
+        }}
+      >
+        <h2>
+          Trabajadores Registrados ({trabajadores.length})
+        </h2>
+
+        <input
+          type="text"
+          placeholder="🔍 Buscar trabajador..."
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          style={inputStyle}
+        />
+
+        {trabajadoresFiltrados.length === 0 ? (
+          <p>No existen trabajadores registrados.</p>
+        ) : (
+          <table
+            style={{
+              width: "100%",
+              borderCollapse: "collapse",
+              marginTop: "15px",
+            }}
+          >
+            <thead>
+              <tr
+                style={{
+                  backgroundColor: "#0f4c81",
+                  color: "white",
+                }}
+              >
+                <th style={thStyle}>Nombre</th>
+                <th style={thStyle}>Especialidad</th>
+                <th style={thStyle}>Teléfono</th>
+                <th style={thStyle}>Correo</th>
+                <th style={thStyle}>Estado</th>
+                <th style={thStyle}>Acción</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {trabajadoresFiltrados.map((trabajador) => (
+                <tr key={trabajador.id}>
+                  <td style={tdStyle}>
+                    {trabajador.nombre} {trabajador.apellido}
+                  </td>
+
+                  <td style={tdStyle}>
+                    {trabajador.especialidad}
+                  </td>
+
+                  <td style={tdStyle}>
+                    {trabajador.telefono}
+                  </td>
+
+                  <td style={tdStyle}>
+                    {trabajador.correo}
+                  </td>
+
+                  <td style={tdStyle}>
+                    {trabajador.estado}
+                  </td>
+
+                  <td style={tdStyle}>
+                    {esAdmin && (
+                      <>
+                        <button
+                          onClick={() =>
+                            editarTrabajador(trabajador)
+                          }
+                          style={{
+                            backgroundColor: "#ffc107",
+                            color: "black",
+                            border: "none",
+                            padding: "8px 12px",
+                            borderRadius: "6px",
+                            cursor: "pointer",
+                            marginRight: "5px",
+                          }}
+                        >
+                          Editar
+                        </button>
+
+                        <button
+                          onClick={() =>
+                            eliminarTrabajador(trabajador.id)
+                          }
+                          style={eliminarButton}
+                        >
+                          Eliminar
+                        </button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
-  );
+  </div>
+);
+
 }
 
 const inputStyle = {
