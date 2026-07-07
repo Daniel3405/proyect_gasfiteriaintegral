@@ -24,576 +24,1101 @@ import {
   doc,
 } from "firebase/firestore";
 
+
 export default function ServiciosPage() {
+
   const { user } = useAuth();
   const router = useRouter();
 
   const esAdmin = user?.role === "admin";
 
-  const [services, setServicios] = useState<Servicio[]>([]);
-  const [form, setForm] =
-    useState<ServicioFormState>(initialFormState);
 
-  const [search, setSearch] = useState("");
+  const [services, setServicios] =
+    useState<Servicio[]>([]);
+
+
+  const [trabajadores, setTrabajadores] =
+    useState<Trabajador[]>([]);
+
+
+  const [form, setForm] =
+    useState<ServicioFormState>(
+      initialFormState
+    );
+
+
+  const [search, setSearch] =
+    useState("");
+
+
   const [editingId, setEditingId] =
     useState<string | null>(null);
 
-  const [error, setError] = useState("");
 
-  const [trabajadores, setTrabajadores] =
-    useState<Trabajador[]>(() => {
-      if (typeof window === "undefined") return [];
+  const [error, setError] =
+    useState("");
 
-      const saved =
-        localStorage.getItem("trabajadores");
 
-      return saved ? JSON.parse(saved) : [];
-    });
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
 
-    const saved =
-      localStorage.getItem("trabajadores");
-
-    if (saved) {
-      setTrabajadores(JSON.parse(saved));
-    }
-  }, []);
-
-  useEffect(() => {
-    cargarServicios();
-  }, []);
-
-  const cargarServicios = async () => {
-    try {
-      const snapshot = await getDocs(
-        collection(db, "servicios")
-      );
-
-      const lista: Servicio[] = snapshot.docs.map(
-        (documento) => ({
-          id: documento.id,
-          ...(documento.data() as Omit<
-            Servicio,
-            "id"
-          >),
-        })
-      );
-
-      setServicios(lista);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  useEffect(() => {
     if (!user) {
       router.replace("/login");
       return;
     }
 
-    if (!esAdmin && !editingId) {
-      setForm((prev) => ({
-        ...prev,
-        clienteNombre: user.nombre || "",
-        clienteTelefono: user.telefono || "",
-        clienteRut: user.rut || "",
-      }));
-    }
-  }, [router, user, esAdmin, editingId]);
+    cargarServicios();
+    cargarTrabajadores();
 
-  const filteredServices = useMemo(() => {
-    const visible = esAdmin
-      ? services
-      : services.filter(
-          (s) =>
+
+  }, [user]);
+
+
+
+
+
+  const cargarServicios = async () => {
+
+    try {
+
+      const snapshot = await getDocs(
+        collection(db,"servicios")
+      );
+
+
+      const lista: Servicio[] =
+        snapshot.docs.map((docu)=>{
+
+          const data = docu.data();
+
+
+          return {
+
+            id: docu.id,
+
+            nombre:
+              data.nombre || "",
+
+            descripcion:
+              data.descripcion || "",
+
+            clienteNombre:
+              data.clienteNombre || "",
+
+            clienteRut:
+              data.clienteRut || "",
+
+            clienteTelefono:
+              data.clienteTelefono || "",
+
+            precio:
+              data.precio || 0,
+
+            duracion:
+              data.duracion || "",
+
+            estado:
+              data.estado || "Pendiente",
+
+            trabajador:
+              data.trabajador || "",
+
+            garantia:
+              data.garantia || "Sin garantía",
+
+          };
+
+        });
+
+
+      setServicios(lista);
+
+
+    } catch(error){
+
+      console.error(
+        "Error cargando servicios",
+        error
+      );
+
+    }
+
+  };
+
+
+
+
+
+
+  const cargarTrabajadores = async () => {
+
+
+    try {
+
+
+      const snapshot =
+        await getDocs(
+          collection(db,"trabajadores")
+        );
+
+
+
+      const lista: Trabajador[] =
+        snapshot.docs.map((docu)=>{
+
+
+          const data = docu.data();
+
+
+
+          return {
+
+            id: docu.id,
+
+            nombre:
+              data.nombre || "",
+
+
+            apellido:
+              data.apellido || "",
+
+
+            telefono:
+              data.telefono || "",
+
+
+            especialidad:
+              data.especialidad || "",
+
+
+            correo:
+              data.correo || "",
+
+
+            estado:
+              data.estado || "Activo",
+
+
+          };
+
+
+        });
+
+
+
+      setTrabajadores(lista);
+
+
+
+    } catch(error){
+
+      console.error(
+        "Error cargando trabajadores",
+        error
+      );
+
+    }
+
+
+  };
+
+
+
+
+
+
+  useEffect(()=>{
+
+
+    if(
+      !esAdmin &&
+      user
+    ){
+
+      setForm((prev)=>({
+
+        ...prev,
+
+        clienteNombre:
+          user.nombre || "",
+
+
+        clienteRut:
+          user.rut || "",
+
+
+        clienteTelefono:
+          user.telefono || "",
+
+
+      }));
+
+    }
+
+
+  },[
+    user,
+    esAdmin
+  ]);
+
+
+
+
+
+
+  const filteredServices =
+    useMemo(()=>{
+
+
+      const visibles =
+        esAdmin
+
+        ?
+
+        services
+
+        :
+
+        services.filter(
+          (s)=>
             s.clienteNombre === user?.nombre &&
             s.clienteRut === user?.rut
         );
 
-    if (!search.trim()) return visible;
 
-    const q = search.toLowerCase();
 
-    return visible.filter(
-      (s) =>
-        s.nombre.toLowerCase().includes(q) ||
-        s.descripcion.toLowerCase().includes(q)
-    );
-  }, [
-    search,
-    services,
-    esAdmin,
-    user?.nombre,
-    user?.rut,
-  ]);
+      if(!search.trim())
+        return visibles;
 
+
+
+      const q =
+        search.toLowerCase();
+
+
+
+      return visibles.filter(
+        (s)=>
+
+          s.nombre
+          .toLowerCase()
+          .includes(q)
+
+          ||
+
+          s.descripcion
+          .toLowerCase()
+          .includes(q)
+
+      );
+
+
+
+    },[
+      services,
+      search,
+      esAdmin,
+      user
+    ]);
   const handleChange = (
-    field: keyof typeof initialFormState,
+    field: keyof ServicioFormState,
     value: string | number
   ) => {
-    setForm((prev) => ({
+
+    setForm((prev)=>({
+
       ...prev,
+
       [field]: value,
+
     }));
+
   };
 
-  const resetForm = () => {
+
+
+
+
+  const resetForm = ()=>{
+
     setForm(initialFormState);
+
     setEditingId(null);
+
     setError("");
+
   };
+
+
+
+
+
+
 
   const handleSubmit = async (
     event: React.SyntheticEvent<HTMLFormElement>
-  ) => {
+  )=>{
+
     event.preventDefault();
 
     setError("");
 
-    if (
+
+
+    if(
       !form.nombre.trim() ||
       !form.descripcion.trim()
-    ) {
+    ){
+
       setError(
         "Completa nombre y descripción."
       );
+
       return;
+
     }
 
-    if (
-      esAdmin &&
-      !form.trabajador.trim()
-    ) {
-      setError(
-        "Completa el trabajador."
-      );
-      return;
-    }
+
 
     const nuevoServicio = {
-      nombre: form.nombre.trim(),
-      descripcion: form.descripcion.trim(),
+
+
+      nombre:
+        form.nombre.trim(),
+
+
+      descripcion:
+        form.descripcion.trim(),
+
+
       clienteNombre:
         form.clienteNombre.trim(),
-      clienteRut: form.clienteRut.trim(),
+
+
+      clienteRut:
+        form.clienteRut.trim(),
+
+
       clienteTelefono:
         form.clienteTelefono.trim(),
-      precio: esAdmin
+
+
+      precio:
+        esAdmin
         ? Number(form.precio)
         : 0,
-      duracion: esAdmin
-        ? form.duracion.trim()
+
+
+      duracion:
+        esAdmin
+        ? form.duracion
         : "",
-      estado: esAdmin
+
+
+      estado:
+        esAdmin
         ? form.estado
         : "Solicitud",
-      trabajador: esAdmin
-        ? form.trabajador.trim()
+
+
+      trabajador:
+        esAdmin
+        ? form.trabajador
         : "",
-      garantia: esAdmin
+
+
+      garantia:
+        esAdmin
         ? form.garantia
         : "Sin garantía",
+
+
     };
 
+
+
+
     try {
-      if (editingId) {
+
+
+      if(editingId){
+
+
         await updateDoc(
-          doc(db, "servicios", editingId),
+          doc(
+            db,
+            "servicios",
+            editingId
+          ),
+
           nuevoServicio
+
         );
 
-        alert("Servicio actualizado.");
-      } else {
+
+        alert(
+          "Servicio actualizado"
+        );
+
+
+      }else{
+
+
         await addDoc(
-          collection(db, "servicios"),
+          collection(
+            db,
+            "servicios"
+          ),
+
           nuevoServicio
+
         );
 
-        alert("Servicio creado.");
+
+        alert(
+          "Solicitud enviada"
+        );
+
+
       }
+
+
 
       resetForm();
+
       cargarServicios();
-    } catch (error) {
+
+
+
+    }catch(error){
+
+
       console.error(error);
+
+
       alert(
-        "Error al guardar el servicio."
+        "Error al guardar servicio"
       );
+
+
     }
+
+
   };
+
+
+
+
+
+
 
   const handleEdit = (
-    service: Servicio
-  ) => {
-    setEditingId(service.id);
+    servicio: Servicio
+  )=>{
 
-    setForm({
-      nombre: service.nombre,
-      descripcion: service.descripcion,
-      clienteNombre: service.clienteNombre,
-      clienteRut: service.clienteRut,
-      clienteTelefono:
-        service.clienteTelefono,
-      precio: service.precio,
-      duracion: service.duracion,
-      estado: service.estado,
-      trabajador: service.trabajador,
-      garantia: service.garantia,
-    });
-  };
 
-  const handleDelete = async (id: string) => {
-    const confirmed = confirm(
-      "¿Eliminar este servicio?"
+    setEditingId(
+      servicio.id
     );
 
-    if (!confirmed) return;
 
-    try {
-      await deleteDoc(doc(db, "servicios", id));
 
-      alert(
-        "Servicio eliminado correctamente."
-      );
+    setForm({
 
-      if (editingId === id) {
-        resetForm();
-      }
+      nombre:
+        servicio.nombre,
 
-      cargarServicios();
-    } catch (error) {
-      console.error(error);
-      alert(
-        "Error al eliminar el servicio."
-      );
-    }
+
+      descripcion:
+        servicio.descripcion,
+
+
+      clienteNombre:
+        servicio.clienteNombre,
+
+
+      clienteRut:
+        servicio.clienteRut,
+
+
+      clienteTelefono:
+        servicio.clienteTelefono,
+
+
+      precio:
+        servicio.precio,
+
+
+      duracion:
+        servicio.duracion,
+
+
+      estado:
+        servicio.estado,
+
+
+      trabajador:
+        servicio.trabajador,
+
+
+      garantia:
+        servicio.garantia,
+
+
+    });
+
+
   };
 
-  const showClientFields =
-    !esAdmin || Boolean(editingId);
-      return (
+
+
+
+
+
+
+  const handleDelete = async(
+    id:string
+  )=>{
+
+
+    if(
+      !confirm(
+        "¿Eliminar servicio?"
+      )
+    )
+      return;
+
+
+
+    try{
+
+
+      await deleteDoc(
+        doc(
+          db,
+          "servicios",
+          id
+        )
+      );
+
+
+      alert(
+        "Servicio eliminado"
+      );
+
+
+      cargarServicios();
+
+
+
+    }catch(error){
+
+
+      console.error(error);
+
+
+    }
+
+
+  };
+
+
+
+
+
+
+
+  return (
+
     <main className={styles.container}>
+
+
       <header className={styles.header}>
-        <h1>Gestión de servicios</h1>
+
+        <h1>
+          Gestión de servicios
+        </h1>
+
         <p>
-          Usuario: {user?.nombre} {user?.apellido}
+          Usuario:
+          {" "}
+          {user?.nombre}
+          {" "}
+          {user?.apellido}
         </p>
+
+
       </header>
 
+
+
+
+
       <section className={styles.section}>
+
+
         <h2>
-          {esAdmin
-            ? "Crear servicio"
-            : "Solicitar servicio"}
+
+          {
+            esAdmin
+            ?
+            "Crear servicio"
+            :
+            "Solicitar servicio"
+          }
+
         </h2>
+
+
+
 
         <form
           onSubmit={handleSubmit}
           className={styles.form}
         >
-          {showClientFields && (
+
+
+
+          {!esAdmin && (
+
             <>
-              <div>
-                <label>Nombre</label>
-                <input
-                  value={form.clienteNombre}
-                  readOnly
-                  className={styles.input}
-                />
-              </div>
 
-              <div>
-                <label>RUT</label>
-                <input
-                  value={form.clienteRut}
-                  readOnly
-                  className={styles.input}
-                />
-              </div>
 
-              <div>
-                <label>Teléfono</label>
-                <input
-                  value={form.clienteTelefono}
-                  readOnly
-                  className={styles.input}
-                />
-              </div>
+              <label>
+                Nombre
+              </label>
+
+              <input
+
+                value={
+                  form.clienteNombre
+                }
+
+                onChange={(e)=>
+                  handleChange(
+                    "clienteNombre",
+                    e.target.value
+                  )
+                }
+
+                className={styles.input}
+
+              />
+
+
+
+              <label>
+                RUT
+              </label>
+
+
+              <input
+
+                value={
+                  form.clienteRut
+                }
+
+                onChange={(e)=>
+                  handleChange(
+                    "clienteRut",
+                    e.target.value
+                  )
+                }
+
+                className={styles.input}
+
+              />
+
+
+
+              <label>
+                Teléfono
+              </label>
+
+
+              <input
+
+                value={
+                  form.clienteTelefono
+                }
+
+                onChange={(e)=>
+                  handleChange(
+                    "clienteTelefono",
+                    e.target.value
+                  )
+                }
+
+                className={styles.input}
+
+              />
+
+
             </>
+
           )}
 
-          <div>
-            <label>Nombre Servicio</label>
-            <input
-              value={form.nombre}
-              onChange={(e) =>
-                handleChange(
-                  "nombre",
-                  e.target.value
-                )
-              }
-              className={styles.input}
-            />
-          </div>
 
-          <div>
-            <label>Descripción</label>
-            <textarea
-              value={form.descripcion}
-              onChange={(e) =>
-                handleChange(
-                  "descripcion",
-                  e.target.value
-                )
-              }
-              className={styles.textarea}
-            />
-          </div>
 
-          {esAdmin && (
-            <>
-              <div className={styles.gridTwo}>
-                <div>
-                  <label>Precio</label>
-                  <input
-                    type="number"
-                    value={form.precio}
-                    onChange={(e) =>
-                      handleChange(
-                        "precio",
-                        Number(
-                          e.target.value
-                        )
-                      )
-                    }
-                    className={styles.input}
-                  />
-                </div>
 
-                <div>
-                  <label>Duración</label>
-                  <input
-                    value={form.duracion}
-                    onChange={(e) =>
-                      handleChange(
-                        "duracion",
-                        e.target.value
-                      )
-                    }
-                    className={styles.input}
-                  />
-                </div>
-              </div>
 
-              <div className={styles.gridTwo}>
-                <div>
-                  <label>Estado</label>
 
-                  <select
-                    value={form.estado}
-                    onChange={(e) =>
-                      handleChange(
-                        "estado",
-                        e.target.value
-                      )
-                    }
-                    className={styles.input}
-                  >
-                    <option>Pendiente</option>
-                    <option>En progreso</option>
-                    <option>Finalizado</option>
-                    <option>Cancelado</option>
-                  </select>
-                </div>
+          <label>
+            Nombre Servicio
+          </label>
 
-                <div>
-                  <label>Trabajador</label>
-
-                  <select
-                    value={form.trabajador}
-                    onChange={(e) =>
-                      handleChange(
-                        "trabajador",
-                        e.target.value
-                      )
-                    }
-                    className={styles.input}
-                  >
-                    <option value="">
-                      Seleccione
-                    </option>
-
-                    {trabajadores.map(
-                      (trabajador) => (
-                        <option
-                          key={trabajador.id}
-                          value={`${trabajador.nombre} ${trabajador.apellido}`}
-                        >
-                          {trabajador.nombre}{" "}
-                          {trabajador.apellido}
-                        </option>
-                      )
-                    )}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label>Garantía</label>
-
-                <input
-                  value={form.garantia}
-                  onChange={(e) =>
-                    handleChange(
-                      "garantia",
-                      e.target.value
-                    )
-                  }
-                  className={styles.input}
-                />
-              </div>
-            </>
-          )}
-
-          {error && (
-            <div className={styles.errorText}>
-              {error}
-            </div>
-          )}
-
-          <div className={styles.buttonRow}>
-            <button
-              type="submit"
-              className={styles.buttonPrimary}
-            >
-              {editingId
-                ? "Actualizar"
-                : esAdmin
-                ? "Crear servicio"
-                : "Enviar solicitud"}
-            </button>
-
-            {editingId && (
-              <button
-                type="button"
-                onClick={resetForm}
-                className={styles.buttonSecondary}
-              >
-                Cancelar
-              </button>
-            )}
-          </div>
-        </form>
-      </section>
-
-      <section>
-        <div className={styles.searchRow}>
-          <h2>Listado de servicios</h2>
 
           <input
-            type="search"
-            placeholder="Buscar..."
-            value={search}
-            onChange={(e) =>
-              setSearch(e.target.value)
+
+            value={
+              form.nombre
             }
-            className={styles.searchInput}
+
+            onChange={(e)=>
+              handleChange(
+                "nombre",
+                e.target.value
+              )
+            }
+
+            className={styles.input}
+
           />
-        </div>
 
-        {filteredServices.length ===
-        0 ? (
-          <p>No existen servicios.</p>
-        ) : (
-          <div className={styles.cardGrid}>
-            {filteredServices.map(
-              (servicio) => (
-                <article
-                  key={servicio.id}
-                  className={styles.card}
-                >
-                  <h3>{servicio.nombre}</h3>
 
-                  <p>
-                    {servicio.descripcion}
-                  </p>
 
-                  {esAdmin && (
+
+
+          <label>
+            Descripción
+          </label>
+
+
+          <textarea
+
+            value={
+              form.descripcion
+            }
+
+            onChange={(e)=>
+              handleChange(
+                "descripcion",
+                e.target.value
+              )
+            }
+
+            className={styles.textarea}
+
+          />
+
+
+
+
+
+          {esAdmin && (
+
+            <>
+
+
+              <label>
+                Trabajador
+              </label>
+
+
+              <select
+
+                value={
+                  form.trabajador
+                }
+
+                onChange={(e)=>
+                  handleChange(
+                    "trabajador",
+                    e.target.value
+                  )
+                }
+
+                className={styles.input}
+
+              >
+
+                <option value="">
+                  Seleccione trabajador
+                </option>
+
+
+                {
+                  trabajadores.map(
+                    (trabajador)=>(
+
+                      <option
+
+                        key={
+                          trabajador.id
+                        }
+
+                        value={
+                          `${trabajador.nombre} ${trabajador.apellido}`
+                        }
+
+                      >
+
+                        {
+                          trabajador.nombre
+                        }
+                        {" "}
+                        {
+                          trabajador.apellido
+                        }
+
+                      </option>
+
+                    )
+                  )
+                }
+
+
+              </select>
+
+
+
+
+              <label>
+                Precio
+              </label>
+
+
+              <input
+
+                type="number"
+
+                value={
+                  form.precio
+                }
+
+                onChange={(e)=>
+                  handleChange(
+                    "precio",
+                    Number(
+                      e.target.value
+                    )
+                  )
+                }
+
+                className={styles.input}
+
+              />
+
+
+
+
+            </>
+
+          )}
+
+
+
+
+
+
+          {error && (
+
+            <p className={styles.errorText}>
+              {error}
+            </p>
+
+          )}
+
+
+
+
+
+
+          <button
+
+            type="submit"
+
+            className={
+              styles.buttonPrimary
+            }
+
+          >
+
+            {
+              editingId
+              ?
+              "Actualizar"
+              :
+              esAdmin
+              ?
+              "Crear servicio"
+              :
+              "Enviar solicitud"
+            }
+
+
+          </button>
+
+
+
+        </form>
+
+
+      </section>
+
+
+
+
+
+
+
+      <section>
+
+
+        <h2>
+          Listado de servicios
+        </h2>
+
+
+
+        <input
+
+          placeholder="Buscar..."
+
+          value={search}
+
+          onChange={(e)=>
+            setSearch(
+              e.target.value
+            )
+          }
+
+          className={
+            styles.searchInput
+          }
+
+        />
+
+
+
+
+
+        {
+          filteredServices.map(
+            (servicio)=>(
+
+
+              <article
+                key={
+                  servicio.id
+                }
+                className={
+                  styles.card
+                }
+              >
+
+
+                <h3>
+                  {
+                    servicio.nombre
+                  }
+                </h3>
+
+
+                <p>
+                  {
+                    servicio.descripcion
+                  }
+                </p>
+
+
+                {
+                  esAdmin && (
+
                     <>
+
+
                       <p>
-                        <strong>
-                          Cliente:
-                        </strong>{" "}
+                        Cliente:
+                        {" "}
                         {
                           servicio.clienteNombre
                         }
                       </p>
 
-                      <p>
-                        <strong>
-                          Precio:
-                        </strong>{" "}
-                        $
-                        {servicio.precio.toLocaleString()}
-                      </p>
 
                       <p>
-                        <strong>
-                          Estado:
-                        </strong>{" "}
-                        {servicio.estado}
-                      </p>
-
-                      <p>
-                        <strong>
-                          Trabajador:
-                        </strong>{" "}
+                        Estado:
+                        {" "}
                         {
-                          servicio.trabajador
+                          servicio.estado
                         }
                       </p>
 
-                      <div
-                        className={
-                          styles.cardActions
-                        }
-                      >
-                        <button
-                          onClick={() =>
-                            handleEdit(
-                              servicio
-                            )
-                          }
-                          className={
-                            styles.buttonPrimary
-                          }
-                        >
-                          Editar
-                        </button>
 
-                        <button
-                          onClick={() =>
-                            handleDelete(
-                              servicio.id
-                            )
-                          }
-                          className={
-                            styles.buttonDanger
-                          }
-                        >
-                          Eliminar
-                        </button>
-                      </div>
+
+                      <button
+
+                        onClick={()=>
+                          handleEdit(
+                            servicio
+                          )
+                        }
+
+                        className={
+                          styles.buttonPrimary
+                        }
+
+                      >
+
+                        Editar
+
+                      </button>
+
+
+
+
+                      <button
+
+                        onClick={()=>
+                          handleDelete(
+                            servicio.id
+                          )
+                        }
+
+                        className={
+                          styles.buttonDanger
+                        }
+
+                      >
+
+                        Eliminar
+
+                      </button>
+
+
                     </>
-                  )}
-                </article>
-              )
-            )}
-          </div>
-        )}
+
+                  )
+                }
+
+
+              </article>
+
+
+            )
+          )
+        }
+
+
+
       </section>
+
+
+
     </main>
+
   );
+
+
 }
