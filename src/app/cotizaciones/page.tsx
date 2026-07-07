@@ -21,18 +21,12 @@ export default function CotizacionesPage() {
   const [selectedCotizacion, setSelectedCotizacion] = useState<Cotizacion | null>(null);
   const [showDetails, setShowDetails] = useState(false);
 
-  const [cotizaciones, setCotizaciones] = useState<Cotizacion[]>(() => {
-      const datosGuardados = localStorage.getItem("cotizaciones");
-    return datosGuardados ? JSON.parse(datosGuardados) : [];
-  });
-  const [services, setServicios] = useState<Servicio[]>(() => {
-    if (typeof window === "undefined") return [];
-    const datos = localStorage.getItem("gasfiteria-servicios");
-    return datos ? JSON.parse(datos) : [];
-  });
+  const [cotizaciones, setCotizaciones] = useState<Cotizacion[]>([]);
+  const [services, setServicios] = useState<Servicio[]>([]);
   const [busqueda, setBusqueda] = useState("");
   const [editandoId, setEditandoId] = useState<number | null>(null);
-
+  const [initialized, setInitialized] = useState(false);
+  
   useEffect(() => {
     if (isLoading) return;
     
@@ -43,16 +37,25 @@ export default function CotizacionesPage() {
   }, [user, router, isLoading]);
 
   useEffect(() => {
-    localStorage.setItem("cotizaciones", JSON.stringify(cotizaciones));
-  }, [cotizaciones]);
+    if (typeof window === "undefined") return;
+
+    const datosGuardados = localStorage.getItem("cotizaciones");
+    if (datosGuardados) {
+      setCotizaciones(JSON.parse(datosGuardados));
+    }
+
+    const datosServicios = localStorage.getItem("gasfiteria-servicios");
+    if (datosServicios) {
+      setServicios(JSON.parse(datosServicios));
+    }
+
+    setInitialized(true);
+  }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const datos = localStorage.getItem("gasfiteria-servicios");
-    if (datos) {
-      setServicios(JSON.parse(datos));
-    }
-  }, []);
+    if (!initialized) return;
+    localStorage.setItem("cotizaciones", JSON.stringify(cotizaciones));
+  }, [cotizaciones, initialized]);
 
   const editarCotizacion = (cotizacion: Cotizacion) => {
     setSolicitudId(cotizacion.solicitudId);
