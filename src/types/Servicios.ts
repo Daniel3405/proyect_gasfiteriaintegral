@@ -1,3 +1,14 @@
+import {
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+} from "firebase/firestore";
+
+import { db } from "@/lib/firebase";
+
 export type Servicio = {
   id: string;
   nombre: string;
@@ -14,8 +25,6 @@ export type Servicio = {
 
 export type ServicioFormState = Omit<Servicio, "id">;
 
-export const STORAGE_KEY = "gasfiteria-servicios";
-
 export const initialFormState: ServicioFormState = {
   nombre: "",
   descripcion: "",
@@ -29,42 +38,38 @@ export const initialFormState: ServicioFormState = {
   garantia: "Sin garantía",
 };
 
-export function loadServicios(): Servicio[] {
-  if (typeof window === "undefined") return [];
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (!stored) return [];
-
-  return JSON.parse(stored).map((item: any) => ({
-    clienteNombre: item.clienteNombre || "",
-    clienteRut: item.clienteRut || "",
-    clienteTelefono: item.clienteTelefono || "",
-    nombre: item.nombre || "",
-    descripcion: item.descripcion || "",
-    precio: item.precio ?? 0,
-    duracion: item.duracion || "",
-    estado: item.estado || "Pendiente",
-    trabajador: item.trabajador || "",
-    garantia: item.garantia || "Sin garantía",
-    id: item.id ?? `${Date.now()}`,
-  }));
-}
-
-export function saveServicios(services: Servicio[]) {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(services));
-}
-
-export function buildServicio(form: ServicioFormState, editingId: string | null): Servicio {
+export function buildServicio(
+  form: ServicioFormState,
+  editingId: string | null
+): Servicio {
   return {
-    id: editingId ?? `${Date.now()}`,
+    id: editingId ?? "",
     ...form,
   };
 }
 
-export function updateServicios(servicio: Servicio[], nServicio: Servicio): Servicio[] {
-  return servicio.map((item) => (item.id === nServicio.id ? nServicio : item));
+const coleccion = collection(db, "servicios");
+
+export async function loadServicios(): Promise<Servicio[]> {
+  const snapshot = await getDocs(coleccion);
+
+  return snapshot.docs.map((documento) => ({
+    id: documento.id,
+    ...(documento.data() as Omit<Servicio, "id">),
+  }));
 }
 
-export function removeServicios(servicio: Servicio[], id: string): Servicio[] {
-  return servicio.filter((servicio) => servicio.id !== id);
+export async function saveServicio(servicio: Servicio) {
+  const { id, ...datos } = servicio;
+  await addDoc(coleccion, datos);
+}
+
+export async function updateServicio(servicio: Servicio) {
+  const { id, ...datos } = servicio;
+
+  await updateDoc(doc(db, "servicios", id), datos);
+}
+
+export async function removeServicio(id: string) {
+  await deleteDoc(doc(db, "servicios", id));
 }
