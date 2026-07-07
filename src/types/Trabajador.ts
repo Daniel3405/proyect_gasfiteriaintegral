@@ -1,9 +1,9 @@
-export interface Trabajador {
-  id: number;
+export type Trabajador = {
+  id: string;
   nombre: string;
   apellido: string;
-  especialidad: string;
   telefono: string;
+  especialidad: string;
   correo: string;
-  estado: "Disponible" | "Ocupado" | "Vacaciones";
-}
+  estado: string;
+};
