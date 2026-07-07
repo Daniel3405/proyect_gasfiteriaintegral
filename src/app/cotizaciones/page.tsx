@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { CSSProperties, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
 import { Cotizacion } from "@/types/Cotizacion";
+import { Servicio, loadServicios } from "@/types/Servicios";
 
 export default function CotizacionesPage() {
   const { user, isLoading } = useAuth();
@@ -17,10 +18,17 @@ export default function CotizacionesPage() {
   const [estado, setEstado] = useState<
     "Pendiente" | "Aprobada" | "Rechazada"
   >("Pendiente");
+  const [selectedCotizacion, setSelectedCotizacion] = useState<Cotizacion | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
 
   const [cotizaciones, setCotizaciones] = useState<Cotizacion[]>(() => {
-    const datosGuardados = localStorage.getItem("cotizaciones");
+      const datosGuardados = localStorage.getItem("cotizaciones");
     return datosGuardados ? JSON.parse(datosGuardados) : [];
+  });
+  const [services, setServicios] = useState<Servicio[]>(() => {
+    if (typeof window === "undefined") return [];
+    const datos = localStorage.getItem("gasfiteria-servicios");
+    return datos ? JSON.parse(datos) : [];
   });
   const [busqueda, setBusqueda] = useState("");
   const [editandoId, setEditandoId] = useState<number | null>(null);
@@ -38,8 +46,16 @@ export default function CotizacionesPage() {
     localStorage.setItem("cotizaciones", JSON.stringify(cotizaciones));
   }, [cotizaciones]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const datos = localStorage.getItem("gasfiteria-servicios");
+    if (datos) {
+      setServicios(JSON.parse(datos));
+    }
+  }, []);
+
   const editarCotizacion = (cotizacion: Cotizacion) => {
-    setSolicitudId(cotizacion.solicitudId.toString());
+    setSolicitudId(cotizacion.solicitudId);
     setMateriales(cotizacion.materiales);
     setCantidad(cotizacion.cantidad.toString());
     setPrecioTotal(cotizacion.precioTotal.toString());
@@ -49,12 +65,30 @@ export default function CotizacionesPage() {
     setEditandoId(cotizacion.id);
   };
 
-  const cotizacionesFiltradas = cotizaciones.filter(
-    (cotizacion) =>
-      cotizacion.materiales.toLowerCase().includes(busqueda.toLowerCase()) ||
-      cotizacion.estado.toLowerCase().includes(busqueda.toLowerCase()) ||
-      cotizacion.solicitudId.toString().includes(busqueda)
-  );
+  const verDetalles = (cotizacion: Cotizacion) => {
+    setSelectedCotizacion(cotizacion);
+    setShowDetails(true);
+  };
+
+  const cotizacionesFiltradas = useMemo(() => {
+    const visible = esAdmin
+      ? cotizaciones
+      : cotizaciones.filter((cotizacion) =>
+          services.some(
+            (servicio) =>
+              servicio.id === cotizacion.solicitudId &&
+              servicio.clienteNombre === user?.nombre &&
+              servicio.clienteRut === user?.rut
+          )
+        );
+
+    return visible.filter(
+      (cotizacion) =>
+        cotizacion.materiales.toLowerCase().includes(busqueda.toLowerCase()) ||
+        cotizacion.estado.toLowerCase().includes(busqueda.toLowerCase()) ||
+        cotizacion.solicitudId.includes(busqueda)
+    );
+  }, [busqueda, cotizaciones, esAdmin, services, user?.nombre, user?.rut]);
 
   const guardarCotizacion = () => {
     if (
@@ -73,7 +107,7 @@ export default function CotizacionesPage() {
         c.id === editandoId
           ? {
               ...c,
-              solicitudId: Number(solicitudId),
+              solicitudId,
               materiales,
               cantidad: Number(cantidad),
               precioTotal: Number(precioTotal),
@@ -90,7 +124,7 @@ export default function CotizacionesPage() {
     } else {
       const nuevaCotizacion: Cotizacion = {
         id: Date.now(),
-        solicitudId: Number(solicitudId),
+        solicitudId,
         materiales,
         cantidad: Number(cantidad),
         precioTotal: Number(precioTotal),
@@ -129,7 +163,18 @@ export default function CotizacionesPage() {
           <div style={{ background: "white", padding: "25px", borderRadius: "15px", boxShadow: "0 4px 15px rgba(0,0,0,0.1)", marginBottom: "25px" }}>
             <h2>Nueva Cotización</h2>
 
-            <input value={solicitudId} onChange={(e) => setSolicitudId(e.target.value)} placeholder="ID Solicitud" style={inputStyle} />
+            <select
+              value={solicitudId}
+              onChange={(e) => setSolicitudId(e.target.value)}
+              style={inputStyle}
+            >
+              <option value="">Selecciona una solicitud</option>
+              {services.map((service) => (
+                <option key={service.id} value={service.id}>
+                  {service.nombre} ({service.id})
+                </option>
+              ))}
+            </select>
             <input value={materiales} onChange={(e) => setMateriales(e.target.value)} placeholder="Materiales" style={inputStyle} />
             <input value={cantidad} onChange={(e) => setCantidad(e.target.value)} placeholder="Cantidad" style={inputStyle} />
             <input value={precioTotal} onChange={(e) => setPrecioTotal(e.target.value)} placeholder="Precio Total" style={inputStyle} />
@@ -193,6 +238,12 @@ export default function CotizacionesPage() {
                     <td style={tdStyle}>{cotizacion.estado}</td>
 
                     <td style={tdStyle}>
+                      <button
+                        onClick={() => verDetalles(cotizacion)}
+                        style={detalleButton}
+                      >
+                        Ver detalles
+                      </button>
                       {esAdmin && (
                         <>
                           <button
@@ -217,6 +268,33 @@ export default function CotizacionesPage() {
             </table>
           )}
         </div>
+
+        {showDetails && selectedCotizacion && (
+          <div style={modalOverlayStyle}>
+            <div style={modalStyle}>
+              <h2>Detalles de Cotización</h2>
+              <p><strong>N° Cotización:</strong> {selectedCotizacion.id}</p>
+              <p><strong>N° Solicitud:</strong> {selectedCotizacion.solicitudId}</p>
+              <p><strong>Materiales:</strong> {selectedCotizacion.materiales}</p>
+              <p><strong>Cantidad:</strong> {selectedCotizacion.cantidad}</p>
+              <p><strong>Precio Total:</strong> ${selectedCotizacion.precioTotal.toLocaleString("es-CL")}</p>
+              <p><strong>Fecha Emisión:</strong> {selectedCotizacion.fechaEmision}</p>
+              <p><strong>Estado:</strong> {selectedCotizacion.estado}</p>
+              {services.find((service) => service.id === selectedCotizacion.solicitudId) ? (
+                <>
+                  <h3>Solicitud vinculada</h3>
+                  <p><strong>Servicio:</strong> {services.find((service) => service.id === selectedCotizacion.solicitudId)?.nombre}</p>
+                  <p><strong>Cliente:</strong> {services.find((service) => service.id === selectedCotizacion.solicitudId)?.clienteNombre}</p>
+                  <p><strong>Trabajador:</strong> {services.find((service) => service.id === selectedCotizacion.solicitudId)?.trabajador || "Sin asignar"}</p>
+                  <p><strong>Estado solicitud:</strong> {services.find((service) => service.id === selectedCotizacion.solicitudId)?.estado}</p>
+                </>
+              ) : (
+                <p>No se encontró la solicitud vinculada.</p>
+              )}
+              <button onClick={() => setShowDetails(false)} style={cerrarButton}>Cerrar</button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -257,6 +335,48 @@ const eliminarButton = {
   padding: "8px 12px",
   borderRadius: "6px",
   cursor: "pointer",
+};
+
+const detalleButton = {
+  backgroundColor: "#0f4c81",
+  color: "white",
+  border: "none",
+  padding: "8px 12px",
+  borderRadius: "6px",
+  cursor: "pointer",
+  marginRight: "5px",
+};
+
+const modalOverlayStyle: CSSProperties = {
+  position: "fixed",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: "rgba(0,0,0,0.5)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  zIndex: 1000,
+};
+
+const modalStyle: CSSProperties = {
+  backgroundColor: "white",
+  padding: "25px",
+  borderRadius: "15px",
+  width: "90%",
+  maxWidth: "600px",
+  boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
+};
+
+const cerrarButton: CSSProperties = {
+  backgroundColor: "#6c757d",
+  color: "white",
+  border: "none",
+  padding: "10px 15px",
+  borderRadius: "8px",
+  cursor: "pointer",
+  marginTop: "20px",
 };
 
 const thStyle = {
