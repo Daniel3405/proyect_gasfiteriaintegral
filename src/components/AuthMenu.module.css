@@ -47,16 +47,49 @@
   color: #0f4c81;
 }
 
+.authActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.userLabel {
+  color: #f1f5f9;
+  font-weight: 600;
+}
+
+.authButton,
+.authButtonSecondary,
 .logoutButton {
-  padding: 0.7rem 1.1rem;
+  padding: 0.7rem 1rem;
   border-radius: 999px;
+  font-weight: 600;
+  transition: opacity 0.2s ease, background-color 0.2s ease;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.authButton {
+  background-color: #fff;
+  color: #0f4c81;
+  border: 1px solid transparent;
+}
+
+.authButtonSecondary {
+  background-color: transparent;
+  color: #fff;
+  border: 1px solid #fff;
+}
+
+.logoutButton {
   border: 1px solid #fff;
   color: #fff;
   background: transparent;
-  cursor: pointer;
-  transition: opacity 0.2s ease;
 }
 
+.authButton:hover,
+.authButtonSecondary:hover,
 .logoutButton:hover {
   opacity: 0.85;
 }

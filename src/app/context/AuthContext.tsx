@@ -143,7 +143,9 @@ export function AuthProvider({
       console.error(error);
       return false;
     }
-  };const register = async (
+  };
+
+  const register = async (
     nombre: string,
     apellido: string,
     email: string,

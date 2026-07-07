@@ -15,7 +15,7 @@ export default function AuthMenu() {
         <div>Gasfitería Integral</div>
         <span className={styles.brandSeparator}>|</span>
         <span className={styles.brandText}>
-          {user ? `Conectado: ${user?.nombre || user?.email || "Usuario"}` : "Invitado"}
+          {user ? `Conectado: ${user.nombre || user.email}` : "Invitado"}
         </span>
       </div>
 
@@ -37,13 +37,34 @@ export default function AuthMenu() {
         </MenuLink>
       </nav>
 
-      <button
-        type="button"
-        className={styles.logoutButton}
-        onClick={logout}
-      >
-        Cerrar sesión
-      </button>
+      <div className={styles.authActions}>
+        {user ? (
+          <>
+            <span className={styles.userLabel}>
+              {user.nombre || user.email}
+            </span>
+            <button
+              type="button"
+              className={styles.logoutButton}
+              onClick={logout}
+            >
+              Cerrar sesión
+            </button>
+          </>
+        ) : (
+          <>
+            <Link href="/login" className={styles.authButton}>
+              Iniciar sesión
+            </Link>
+            <Link
+              href="/login?mode=register"
+              className={styles.authButtonSecondary}
+            >
+              Registrarse
+            </Link>
+          </>
+        )}
+      </div>
     </header>
   );
 }

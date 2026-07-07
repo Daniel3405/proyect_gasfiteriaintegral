@@ -1,11 +1,6 @@
-export interface Cotizacion {
-<<<<<<< Updated upstream
-  id: number;
-  solicitudId: string;
-=======
+﻿export interface Cotizacion {
   id: string;
-  solicitudId: number;
->>>>>>> Stashed changes
+  solicitudId: string;
   materiales: string;
   cantidad: number;
   precioTotal: number;
