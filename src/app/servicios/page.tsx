@@ -4,39 +4,88 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
 import styles from "./servicios.module.css";
+
 import type { Trabajador } from "../../types/Trabajador";
+
 import {
   Servicio,
   ServicioFormState,
   initialFormState,
-  loadServicios,
-  saveServicios,
-  updateServicios,
-  removeServicios,
 } from "../../types/Servicios";
+
+import { db } from "@/lib/firebase";
+
+import {
+  collection,
+  addDoc,
+  getDocs,
+  updateDoc,
+  deleteDoc,
+  doc,
+} from "firebase/firestore";
 
 export default function ServiciosPage() {
   const { user } = useAuth();
   const router = useRouter();
+
   const esAdmin = user?.role === "admin";
-  const [services, setServicios] = useState<Servicio[]>(() => loadServicios());
-  const [form, setForm] = useState<ServicioFormState>(initialFormState);
+
+  const [services, setServicios] = useState<Servicio[]>([]);
+  const [form, setForm] =
+    useState<ServicioFormState>(initialFormState);
+
   const [search, setSearch] = useState("");
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingId, setEditingId] =
+    useState<string | null>(null);
+
   const [error, setError] = useState("");
-  const [trabajadores, setTrabajadores] = useState<Trabajador[]>(() => {
-    if (typeof window === "undefined") return [];
-    const saved = localStorage.getItem("trabajadores");
-    return saved ? JSON.parse(saved) : [];
-  });
+
+  const [trabajadores, setTrabajadores] =
+    useState<Trabajador[]>(() => {
+      if (typeof window === "undefined") return [];
+
+      const saved =
+        localStorage.getItem("trabajadores");
+
+      return saved ? JSON.parse(saved) : [];
+    });
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const saved = localStorage.getItem("trabajadores");
+
+    const saved =
+      localStorage.getItem("trabajadores");
+
     if (saved) {
       setTrabajadores(JSON.parse(saved));
     }
   }, []);
+
+  useEffect(() => {
+    cargarServicios();
+  }, []);
+
+  const cargarServicios = async () => {
+    try {
+      const snapshot = await getDocs(
+        collection(db, "servicios")
+      );
+
+      const lista: Servicio[] = snapshot.docs.map(
+        (documento) => ({
+          id: documento.id,
+          ...(documento.data() as Omit<
+            Servicio,
+            "id"
+          >),
+        })
+      );
+
+      setServicios(lista);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   useEffect(() => {
     if (!user) {
@@ -54,26 +103,40 @@ export default function ServiciosPage() {
     }
   }, [router, user, esAdmin, editingId]);
 
-  useEffect(() => {
-    saveServicios(services);
-  }, [services]);
-
   const filteredServices = useMemo(() => {
     const visible = esAdmin
       ? services
       : services.filter(
-          (s) => s.clienteNombre === user?.nombre && s.clienteRut === user?.rut
+          (s) =>
+            s.clienteNombre === user?.nombre &&
+            s.clienteRut === user?.rut
         );
+
     if (!search.trim()) return visible;
+
     const q = search.toLowerCase();
-    return visible.filter((s) => s.nombre.toLowerCase().includes(q) || s.descripcion.toLowerCase().includes(q));
-  }, [search, services, esAdmin, user?.nombre, user?.rut]);
+
+    return visible.filter(
+      (s) =>
+        s.nombre.toLowerCase().includes(q) ||
+        s.descripcion.toLowerCase().includes(q)
+    );
+  }, [
+    search,
+    services,
+    esAdmin,
+    user?.nombre,
+    user?.rut,
+  ]);
 
   const handleChange = (
     field: keyof typeof initialFormState,
     value: string | number
   ) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
   };
 
   const resetForm = () => {
@@ -82,49 +145,97 @@ export default function ServiciosPage() {
     setError("");
   };
 
-  const handleSubmit = (event: React.SyntheticEvent<HTMLFormElement>) => {
+  const handleSubmit = async (
+    event: React.SyntheticEvent<HTMLFormElement>
+  ) => {
     event.preventDefault();
+
     setError("");
 
-    if (!form.nombre.trim() || !form.descripcion.trim()) {
-      setError("Completa nombre y descripción.");
-      return;
-    }
-    if (esAdmin && !form.trabajador.trim()) {
-      setError("Completa el trabajador.");
+    if (
+      !form.nombre.trim() ||
+      !form.descripcion.trim()
+    ) {
+      setError(
+        "Completa nombre y descripción."
+      );
       return;
     }
 
-    const nServicio: Servicio = {
-      id: editingId || `${Date.now()}`,
+    if (
+      esAdmin &&
+      !form.trabajador.trim()
+    ) {
+      setError(
+        "Completa el trabajador."
+      );
+      return;
+    }
+
+    const nuevoServicio = {
       nombre: form.nombre.trim(),
       descripcion: form.descripcion.trim(),
-      clienteNombre: form.clienteNombre.trim(),
+      clienteNombre:
+        form.clienteNombre.trim(),
       clienteRut: form.clienteRut.trim(),
-      clienteTelefono: form.clienteTelefono.trim(),
-      precio: esAdmin ? Number(form.precio) : 0,
-      duracion: esAdmin ? form.duracion.trim() : "",
-      estado: esAdmin ? form.estado : "Solicitud",
-      trabajador: esAdmin ? form.trabajador.trim() : "",
-      garantia: esAdmin ? form.garantia : "Sin garantía",
+      clienteTelefono:
+        form.clienteTelefono.trim(),
+      precio: esAdmin
+        ? Number(form.precio)
+        : 0,
+      duracion: esAdmin
+        ? form.duracion.trim()
+        : "",
+      estado: esAdmin
+        ? form.estado
+        : "Solicitud",
+      trabajador: esAdmin
+        ? form.trabajador.trim()
+        : "",
+      garantia: esAdmin
+        ? form.garantia
+        : "Sin garantía",
     };
 
-    if (editingId) {
-      setServicios((prev) => updateServicios(prev, nServicio));
-    } else {
-      setServicios((prev) => [...prev, nServicio]);
+    try {
+      if (editingId) {
+        await updateDoc(
+          doc(db, "servicios", editingId),
+          nuevoServicio
+        );
+
+        alert("Servicio actualizado.");
+      } else {
+        await addDoc(
+          collection(db, "servicios"),
+          nuevoServicio
+        );
+
+        alert("Servicio creado.");
+      }
+
+      resetForm();
+      cargarServicios();
+    } catch (error) {
+      console.error(error);
+      alert(
+        "Error al guardar el servicio."
+      );
     }
-    resetForm();
   };
 
-  const handleEdit = (service: Servicio) => {
+  const handleEdit = (
+    service: Servicio
+  ) => {
     setEditingId(service.id);
+
     setForm({
       nombre: service.nombre,
       descripcion: service.descripcion,
       clienteNombre: service.clienteNombre,
       clienteRut: service.clienteRut,
-      clienteTelefono: service.clienteTelefono,
+      clienteTelefono:
+        service.clienteTelefono,
       precio: service.precio,
       duracion: service.duracion,
       estado: service.estado,
@@ -133,34 +244,60 @@ export default function ServiciosPage() {
     });
   };
 
-  const handleDelete = (id: string) => {
-    const confirmed = confirm("¿Eliminar este servicio?");
+  const handleDelete = async (id: string) => {
+    const confirmed = confirm(
+      "¿Eliminar este servicio?"
+    );
+
     if (!confirmed) return;
-    setServicios((prev) => removeServicios(prev, id));
-    if (editingId === id) {
-      resetForm();
+
+    try {
+      await deleteDoc(doc(db, "servicios", id));
+
+      alert(
+        "Servicio eliminado correctamente."
+      );
+
+      if (editingId === id) {
+        resetForm();
+      }
+
+      cargarServicios();
+    } catch (error) {
+      console.error(error);
+      alert(
+        "Error al eliminar el servicio."
+      );
     }
   };
 
-  const showClientFields = !esAdmin || Boolean(editingId);
-
-  return (
+  const showClientFields =
+    !esAdmin || Boolean(editingId);
+      return (
     <main className={styles.container}>
       <header className={styles.header}>
         <h1>Gestión de servicios</h1>
-        <p>Usuario: {user?.nombre} {user?.apellido}</p>
+        <p>
+          Usuario: {user?.nombre} {user?.apellido}
+        </p>
       </header>
 
       <section className={styles.section}>
-        <h2>{esAdmin ? "Crear servicio" : "Solicitar servicio"}</h2>
-        <form onSubmit={handleSubmit} className={styles.form}>
+        <h2>
+          {esAdmin
+            ? "Crear servicio"
+            : "Solicitar servicio"}
+        </h2>
 
+        <form
+          onSubmit={handleSubmit}
+          className={styles.form}
+        >
           {showClientFields && (
             <>
               <div>
-                <label htmlFor="clienteNombre">Nombre</label>
+                <label>Nombre</label>
                 <input
-                  id="clienteNombre"
                   value={form.clienteNombre}
                   readOnly
                   className={styles.input}
@@ -168,9 +305,8 @@ export default function ServiciosPage() {
               </div>
 
               <div>
-                <label htmlFor="clienteRut">Tu RUT</label>
+                <label>RUT</label>
                 <input
-                  id="clienteRut"
                   value={form.clienteRut}
                   readOnly
                   className={styles.input}
@@ -178,9 +314,8 @@ export default function ServiciosPage() {
               </div>
 
               <div>
-                <label htmlFor="clienteTelefono">Tu Teléfono</label>
+                <label>Teléfono</label>
                 <input
-                  id="clienteTelefono"
                   value={form.clienteTelefono}
                   readOnly
                   className={styles.input}
@@ -190,21 +325,29 @@ export default function ServiciosPage() {
           )}
 
           <div>
-            <label htmlFor="nombre">Nombre Servicio</label>
+            <label>Nombre Servicio</label>
             <input
-              id="nombre"
               value={form.nombre}
-              onChange={(event) => handleChange("nombre", event.target.value)}
+              onChange={(e) =>
+                handleChange(
+                  "nombre",
+                  e.target.value
+                )
+              }
               className={styles.input}
             />
           </div>
 
           <div>
-            <label htmlFor="descripcion">Descripción</label>
+            <label>Descripción</label>
             <textarea
-              id="descripcion"
               value={form.descripcion}
-              onChange={(event) => handleChange("descripcion", event.target.value)}
+              onChange={(e) =>
+                handleChange(
+                  "descripcion",
+                  e.target.value
+                )
+              }
               className={styles.textarea}
             />
           </div>
@@ -213,22 +356,32 @@ export default function ServiciosPage() {
             <>
               <div className={styles.gridTwo}>
                 <div>
-                  <label htmlFor="precio">Precio</label>
+                  <label>Precio</label>
                   <input
-                    id="precio"
                     type="number"
                     value={form.precio}
-                    onChange={(event) => handleChange("precio", Number(event.target.value))}
+                    onChange={(e) =>
+                      handleChange(
+                        "precio",
+                        Number(
+                          e.target.value
+                        )
+                      )
+                    }
                     className={styles.input}
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="duracion">Duración</label>
+                  <label>Duración</label>
                   <input
-                    id="duracion"
                     value={form.duracion}
-                    onChange={(event) => handleChange("duracion", event.target.value)}
+                    onChange={(e) =>
+                      handleChange(
+                        "duracion",
+                        e.target.value
+                      )
+                    }
                     className={styles.input}
                   />
                 </div>
@@ -236,11 +389,16 @@ export default function ServiciosPage() {
 
               <div className={styles.gridTwo}>
                 <div>
-                  <label htmlFor="estado">Estado</label>
+                  <label>Estado</label>
+
                   <select
-                    id="estado"
                     value={form.estado}
-                    onChange={(event) => handleChange("estado", event.target.value)}
+                    onChange={(e) =>
+                      handleChange(
+                        "estado",
+                        e.target.value
+                      )
+                    }
                     className={styles.input}
                   >
                     <option>Pendiente</option>
@@ -251,50 +409,81 @@ export default function ServiciosPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="trabajador">Trabajador asociado</label>
+                  <label>Trabajador</label>
+
                   <select
-                    id="trabajador"
                     value={form.trabajador}
-                    onChange={(event) => handleChange("trabajador", event.target.value)}
+                    onChange={(e) =>
+                      handleChange(
+                        "trabajador",
+                        e.target.value
+                      )
+                    }
                     className={styles.input}
-                    disabled={trabajadores.length === 0}
                   >
                     <option value="">
-                      {trabajadores.length === 0
-                        ? "No hay trabajadores registrados"
-                        : "Selecciona un trabajador"}
+                      Seleccione
                     </option>
-                    {trabajadores.map((trabajador) => (
-                      <option
-                        key={trabajador.id}
-                        value={`${trabajador.nombre} ${trabajador.apellido}`}
-                      >
-                        {trabajador.nombre} {trabajador.apellido} - {trabajador.especialidad}
-                      </option>
-                    ))}
+
+                    {trabajadores.map(
+                      (trabajador) => (
+                        <option
+                          key={trabajador.id}
+                          value={`${trabajador.nombre} ${trabajador.apellido}`}
+                        >
+                          {trabajador.nombre}{" "}
+                          {trabajador.apellido}
+                        </option>
+                      )
+                    )}
                   </select>
                 </div>
               </div>
 
               <div>
-                <label htmlFor="garantia">Garantía</label>
+                <label>Garantía</label>
+
                 <input
-                  id="garantia"
                   value={form.garantia}
-                  onChange={(event) => handleChange("garantia", event.target.value)}
+                  onChange={(e) =>
+                    handleChange(
+                      "garantia",
+                      e.target.value
+                    )
+                  }
                   className={styles.input}
                 />
               </div>
             </>
           )}
 
-          {error && <div className={styles.errorText}>{error}</div>}
+          {error && (
+            <div className={styles.errorText}>
+              {error}
+            </div>
+          )}
 
           <div className={styles.buttonRow}>
-            <button type="submit" className={styles.buttonPrimary}>
-              {esAdmin ? "Crear servicio" : "Enviar solicitud"}
+            <button
+              type="submit"
+              className={styles.buttonPrimary}
+            >
+              {editingId
+                ? "Actualizar"
+                : esAdmin
+                ? "Crear servicio"
+                : "Enviar solicitud"}
             </button>
-            {editingId && <button type="button" onClick={resetForm} className={styles.buttonSecondary}>Cancelar</button>}
+
+            {editingId && (
+              <button
+                type="button"
+                onClick={resetForm}
+                className={styles.buttonSecondary}
+              >
+                Cancelar
+              </button>
+            )}
           </div>
         </form>
       </section>
@@ -302,41 +491,106 @@ export default function ServiciosPage() {
       <section>
         <div className={styles.searchRow}>
           <h2>Listado de servicios</h2>
+
           <input
             type="search"
-            placeholder="Buscar servicios..."
+            placeholder="Buscar..."
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(e) =>
+              setSearch(e.target.value)
+            }
             className={styles.searchInput}
           />
         </div>
 
-        {filteredServices.length === 0 ? (
-          <p>No hay servicios que coincidan.</p>
+        {filteredServices.length ===
+        0 ? (
+          <p>No existen servicios.</p>
         ) : (
           <div className={styles.cardGrid}>
-            {filteredServices.map((servicio) => (
-              <article key={servicio.id} className={styles.card}>
-                <h3>{servicio.nombre}</h3>
-                <p>{servicio.descripcion}</p>
-                {esAdmin && (
-                  <>
-                    <p><strong>Cliente:</strong> {servicio.clienteNombre}</p>
-                    <p><strong>RUT Cliente:</strong> {servicio.clienteRut}</p>
-                    <p><strong>Teléfono Cliente:</strong> {servicio.clienteTelefono}</p>
-                    <p><strong>Precio:</strong> ${servicio.precio.toLocaleString()}</p>
-                    <p><strong>Duración:</strong> {servicio.duracion || "Sin duración"}</p>
-                    <p><strong>Estado:</strong> {servicio.estado}</p>
-                    <p><strong>Trabajador:</strong> {servicio.trabajador || "Sin asignar"}</p>
-                    <p><strong>Garantía:</strong> {servicio.garantia}</p>
-                    <div className={styles.cardActions}>
-                      <button type="button" onClick={() => handleEdit(servicio)} className={styles.buttonPrimary}>Editar</button>
-                      <button type="button" onClick={() => handleDelete(servicio.id)} className={styles.buttonDanger}>Eliminar</button>
-                    </div>
-                  </>
-                )}
-              </article>
-            ))}
+            {filteredServices.map(
+              (servicio) => (
+                <article
+                  key={servicio.id}
+                  className={styles.card}
+                >
+                  <h3>{servicio.nombre}</h3>
+
+                  <p>
+                    {servicio.descripcion}
+                  </p>
+
+                  {esAdmin && (
+                    <>
+                      <p>
+                        <strong>
+                          Cliente:
+                        </strong>{" "}
+                        {
+                          servicio.clienteNombre
+                        }
+                      </p>
+
+                      <p>
+                        <strong>
+                          Precio:
+                        </strong>{" "}
+                        $
+                        {servicio.precio.toLocaleString()}
+                      </p>
+
+                      <p>
+                        <strong>
+                          Estado:
+                        </strong>{" "}
+                        {servicio.estado}
+                      </p>
+
+                      <p>
+                        <strong>
+                          Trabajador:
+                        </strong>{" "}
+                        {
+                          servicio.trabajador
+                        }
+                      </p>
+
+                      <div
+                        className={
+                          styles.cardActions
+                        }
+                      >
+                        <button
+                          onClick={() =>
+                            handleEdit(
+                              servicio
+                            )
+                          }
+                          className={
+                            styles.buttonPrimary
+                          }
+                        >
+                          Editar
+                        </button>
+
+                        <button
+                          onClick={() =>
+                            handleDelete(
+                              servicio.id
+                            )
+                          }
+                          className={
+                            styles.buttonDanger
+                          }
+                        >
+                          Eliminar
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </article>
+              )
+            )}
           </div>
         )}
       </section>
